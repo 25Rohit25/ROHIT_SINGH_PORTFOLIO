@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+:root {
+  --background: #000000;
+  --foreground: #f4f1eb;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-serif: var(--font-instrument-serif);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #000;
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: #ff6b51;
+  color: #000;
+}
+
+.hero-track {
+  height: 600vh;
+}
+
+.hero-stage {
+  height: 100svh;
+  min-height: 560px;
+}
+
+.hero-media-wrap {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.hero-canvas {
+  opacity: 0;
+  transition: opacity 600ms ease-out;
+}
+
+.hero-beat {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+@media (max-width: 768px) {
+  .hero-track {
+    height: 100svh;
+  }
+
+  .hero-stage {
+    min-height: 0;
+  }
+}
