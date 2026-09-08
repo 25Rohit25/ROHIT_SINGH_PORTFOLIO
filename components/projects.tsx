@@ -81,6 +81,7 @@ const projects: ProjectItem[] = [
     metrics: "Deterministic Scoring · K8s Rollouts · Prometheus HTTP",
     stack: ["Go (Golang)", "PostgreSQL", "Prometheus", "Kubernetes", "Next.js", "Docker"],
     github: "https://github.com/25Rohit25/valiant",
+    thumbnail: "/projects/valiant-dashboard.png",
     gradient: "from-[#7c3aed] via-[#8b5cf6] to-[#a78bfa]",
     accentColor: "#7c3aed",
   },

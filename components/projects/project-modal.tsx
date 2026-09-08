@@ -10,6 +10,12 @@ import {
   IdempotencySimulator,
   DatabaseSchemaVisualizer,
 } from "./payflow-interactive";
+import {
+  IncidentTimelineSimulator,
+  BaselineImpactVisualizer,
+  ValiantSchemaVisualizer,
+  ValiantAttributionCard,
+} from "./valiant-interactive";
 
 interface ProjectModalProps {
   project: ProjectWhitepaper | null;
@@ -75,6 +81,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
   const activeNode = project.architecture.pipeline[activeNodeIndex] || project.architecture.pipeline[0];
   const isPayflow = project.id === "payflow";
+  const isValiant = project.id === "valiant";
 
   const copyCode = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -84,7 +91,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
   const tabs: { id: ModalTab; label: string; icon: string }[] = [
     { id: "architecture", label: "Architecture & Journey", icon: "⚡" },
-    ...(isPayflow ? [{ id: "simulators" as ModalTab, label: "Interactive Simulators", icon: "🎮" }] : []),
+    ...(isPayflow || isValiant ? [{ id: "simulators" as ModalTab, label: "Interactive Simulators", icon: "🎮" }] : []),
     { id: "problem", label: "Problem & Solution", icon: "🎯" },
     { id: "benchmarks", label: "Benchmarks & Impact", icon: "📊" },
     { id: "stack", label: "Tech Stack & Trade-offs", icon: "🛠️" },
@@ -294,11 +301,11 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
                   <span className="h-3 w-3 rounded-full bg-[#27c93f]" />
                   <span className="ml-2 font-mono text-[11px] text-slate-400 hidden sm:inline-block">
-                    payflow.app // dashboard
+                    {project.id === "valiant" ? "valiant.sre // change-impact-radar" : `${project.id}.app // dashboard`}
                   </span>
                 </div>
                 <div className="rounded-md bg-slate-200/60 px-3 py-1 font-mono text-[10px] text-slate-600 truncate max-w-xs sm:max-w-md">
-                  https://payflow.rohit.engineering/dashboard
+                  {project.id === "valiant" ? "http://localhost:3000 (Valiant Radar Dashboard)" : `https://${project.id}.rohit.engineering/dashboard`}
                 </div>
                 <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 font-mono text-[9px] font-semibold text-emerald-800">
                   ● LIVE UI
@@ -522,17 +529,215 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 </div>
               )}
 
-              {/* 05 — THE COMPLETE JOURNEY OF ONE TRANSFER (VISUAL CENTERPIECE) */}
+              {/* VALIANT STORY & CENTRAL QUESTION */}
+              {isValiant && (
+                <div className="rounded-3xl border border-purple-200 bg-gradient-to-br from-purple-50/80 via-white to-slate-50 p-6 sm:p-8 md:p-10 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-purple-600 px-3 py-1 font-mono text-xs font-bold text-white">
+                      SRE THESIS &amp; CENTRAL QUESTION
+                    </span>
+                  </div>
+
+                  <h2 className="mt-4 text-xl sm:text-2xl font-bold text-slate-900">
+                    When production breaks after several recent changes, how do I determine which change most likely caused the degradation—without relying on a black-box model?
+                  </h2>
+
+                  <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-700">
+                    Imagine a production service starts misbehaving at 3:20 PM: latency spikes, error rate climbs to 8.4%, and CPU looks unusual.
+                    During the preceding hour, five separate events took place:
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-700">
+                    <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
+                      <strong className="text-slate-900 font-mono">14:31</strong> — Deployment v2.8.1 (payment-gateway)
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
+                      <strong className="text-slate-900 font-mono">14:44</strong> — ConfigMap updated (checkout-api)
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
+                      <strong className="text-slate-900 font-mono">14:53</strong> — Secret rotated (auth-service)
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
+                      <strong className="text-purple-700 font-mono font-bold">15:02</strong> — Deployment v2.8.2 (checkout-api)
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs sm:col-span-2">
+                      <strong className="text-slate-900 font-mono">15:15</strong> — Feature configuration changed (checkout-api)
+                    </div>
+                  </div>
+
+                  {/* 3 Paradigms Comparison */}
+                  <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3 text-xs">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <span className="font-mono font-bold text-slate-500 uppercase">Traditional Monitoring</span>
+                      <h4 className="mt-1 font-bold text-slate-900">Answers &quot;What is broken?&quot;</h4>
+                      <p className="mt-2 text-slate-600 leading-relaxed">
+                        Alerts on symptoms: p95 &gt; 600ms, error rate 8.4%. Useful, but gives zero direction on which change caused the fire.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
+                      <span className="font-mono font-bold text-amber-700 uppercase">AIOps / Black-Box ML</span>
+                      <h4 className="mt-1 font-bold text-amber-950">Guesses &quot;What might cause it?&quot;</h4>
+                      <p className="mt-2 text-amber-900/80 leading-relaxed">
+                        Uses opaque statistical correlation or ML confidence ratings. Engineers cannot verify why a change was flagged.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-purple-200 bg-purple-50/60 p-4 ring-2 ring-purple-500/20">
+                      <span className="font-mono font-bold text-purple-700 uppercase">Valiant Deterministic Radar</span>
+                      <h4 className="mt-1 font-bold text-purple-950">Answers &quot;Which executed change broke it?&quot;</h4>
+                      <p className="mt-2 text-purple-900/80 leading-relaxed">
+                        Explicit PromQL telemetry windowing and reproducible delta variance rules. 100% explainable evidence.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VALIANT 01 — THE INCIDENT TIMELINE (INTERACTIVE SIMULATOR) */}
+              {isValiant && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="font-mono text-xs font-bold text-purple-600">DECISION 01 // INTERACTIVE SIMULATOR</span>
+                    <h3 className="text-lg font-bold text-slate-900">Evaluating Five Changes During an Incident</h3>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed px-1">
+                    Click <strong>&quot;Run Deterministic Impact Analysis&quot;</strong> below to watch Valiant query Prometheus range vectors, calculate variance deltas, rank candidates, and generate an immutable snapshot.
+                  </p>
+                  <IncidentTimelineSimulator />
+                </div>
+              )}
+
+              {/* VALIANT 02 — WHY DEPLOYMENT TIME MATTERS MORE THAN COMMIT TIME */}
+              {isValiant && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-blue-600">DECISION 02</span>
+                    <h3 className="text-lg font-bold text-slate-900">Why Deployment Time Matters More Than Git Commit Time</h3>
+                  </div>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Suppose code was committed to Git at <strong>10:04 AM</strong>, but the container build, CI pipeline, approval gates, and Kubernetes rollout only finished at <strong>2:42 PM</strong>.
+                    If service degradation begins at <strong>2:47 PM</strong>, anchoring analysis to Git commit timestamps creates the completely wrong correlation window.
+                    Valiant models an executed <code className="font-mono text-slate-800">ChangeEvent</code> boundary (<code className="font-mono text-slate-800">rollout_end</code>) when the container actually started serving live customer traffic.
+                  </p>
+
+                  <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-950 p-4 sm:p-6 text-slate-200 font-mono text-xs">
+                    <div className="text-[10px] text-slate-400 font-bold uppercase pb-3 border-b border-slate-800">
+                      Execution Boundary Timeline vs Git Commit Time
+                    </div>
+                    <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-3 text-center">
+                      <div className="rounded-xl border border-slate-700 bg-slate-900 p-3 w-full md:w-auto opacity-60">
+                        <div className="font-bold text-slate-400">10:04 AM</div>
+                        <div className="text-[10px] text-slate-500 mt-1">Git Commit Pushed</div>
+                      </div>
+                      <span className="text-slate-600">→ (CI Build / Tests / Gates) →</span>
+                      <div className="rounded-xl border border-blue-500/50 bg-blue-950/40 p-3 w-full md:w-auto">
+                        <div className="font-bold text-blue-400">2:40 PM</div>
+                        <div className="text-[10px] text-slate-400 mt-1">Rollout Begins</div>
+                      </div>
+                      <span className="text-slate-600">→</span>
+                      <div className="rounded-xl border border-emerald-500/50 bg-emerald-950/40 p-3 w-full md:w-auto ring-2 ring-emerald-500/30">
+                        <div className="font-bold text-emerald-400">2:42 PM (rollout_end)</div>
+                        <div className="text-[10px] text-emerald-300 mt-1">CHANGE ACTIVE IN PROD</div>
+                      </div>
+                      <span className="text-slate-600">→</span>
+                      <div className="rounded-xl border border-red-500/50 bg-red-950/40 p-3 w-full md:w-auto">
+                        <div className="font-bold text-red-400">2:47 PM</div>
+                        <div className="text-[10px] text-red-300 mt-1">Degradation Begins</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VALIANT 03 — BASELINE VS IMPACT WINDOW & GUARDED EVALUATION */}
+              {isValiant && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="font-mono text-xs font-bold text-emerald-600">DECISION 03 // EVALUATION GUARD</span>
+                    <h3 className="text-lg font-bold text-slate-900">Baseline vs. Impact Window (ErrImpactWindowNotClosed)</h3>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed px-1">
+                    Instead of simply asking &quot;Did latency become high?&quot;, Valiant asks: &quot;How much did latency change relative to behavior immediately before this change?&quot;
+                    Toggle between <strong>T+6m</strong> and <strong>T+30m</strong> below to see how Valiant refuses premature evaluations until sufficient telemetry evidence exists.
+                  </p>
+                  <BaselineImpactVisualizer />
+                </div>
+              )}
+
+              {/* VALIANT 04 — ARCHITECTURAL TRADE-OFF: NO EVENT BUS IN OSS */}
+              {isValiant && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-amber-600">DECISION 04</span>
+                    <h3 className="text-lg font-bold text-slate-900">Architecture Trade-off: Direct Ingestion vs. Kafka Event Bus</h3>
+                  </div>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    A heavy enterprise system would place Kafka or NATS between collectors and the backend. Open-source Valiant deliberately ingests directly to the Go API and PostgreSQL.
+                    This trade-off sacrifices queuing during backend outages in exchange for radically simplified operations: single-binary deployments, minimal operational overhead, and effortless local debugging.
+                  </p>
+
+                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+                      <div className="font-bold text-emerald-800">What We Gained (Direct Go API Ingestion)</div>
+                      <ul className="mt-2 space-y-1 text-slate-600">
+                        <li>• Zero Kafka/Zookeeper cluster operational burden.</li>
+                        <li>• Single Docker Compose setup for instant local evaluation.</li>
+                        <li>• Minimal memory footprint (&lt;45MB RAM daemon).</li>
+                      </ul>
+                    </div>
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                      <div className="font-bold text-amber-800">What We Consciously Traded Off</div>
+                      <ul className="mt-2 space-y-1 text-slate-600">
+                        <li>• Event buffering during backend downtime requires sender retry.</li>
+                        <li>• Ingestion throughput capped by direct PostgreSQL write capacity.</li>
+                        <li>• Accepted because deployment frequency in OSS clusters is ~10-50/hr.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VALIANT 05 — SOMETIMES THE RIGHT ANSWER ISN'T AI */}
+              {isValiant && (
+                <div className="rounded-3xl border border-purple-200 bg-gradient-to-br from-purple-50/60 via-white to-slate-50 p-6 sm:p-8 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-purple-700">DECISION 05</span>
+                    <h3 className="text-lg font-bold text-slate-900">Sometimes the Right Answer Isn&apos;t AI</h3>
+                  </div>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Root-cause analysis is often marketed as &quot;AI-powered anomaly detection.&quot; But during a high-severity production outage, an SRE needs transparent, inspectable evidence—not an unexplainable 87% confidence rating from a black-box model.
+                  </p>
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                    <div className="rounded-xl border border-red-200 bg-red-50/60 p-4 text-red-900">
+                      <div className="font-bold text-red-700 mb-1">Black-Box Model Output:</div>
+                      &quot;Deployment v2.8.2 has an 87% probability of causing the incident (Confidence: High).&quot;
+                      <div className="mt-2 text-[10px] text-red-600 font-sans">
+                        ↳ Unverifiable. Requires blind trust.
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-emerald-900">
+                      <div className="font-bold text-emerald-700 mb-1">Valiant Deterministic Output:</div>
+                      &quot;Deployment v2.8.2 ranked #1: p95 latency increased +167% (182ms → 487ms), 5xx errors rose +628% within its 30m impact window.&quot;
+                      <div className="mt-2 text-[10px] text-emerald-700 font-sans">
+                        ↳ 100% verifiable from Prometheus PromQL samples.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 05 — THE COMPLETE JOURNEY (VISUAL CENTERPIECE) */}
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-bold text-blue-600">
-                        {isPayflow ? "DECISION 05 // VISUAL CENTERPIECE" : "ARCHITECTURE PIPELINE"}
+                        {isPayflow ? "DECISION 05 // VISUAL CENTERPIECE" : isValiant ? "DECISION 06 // VISUAL CENTERPIECE" : "ARCHITECTURE PIPELINE"}
                       </span>
                     </div>
                     <h3 className="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">
-                      The Complete Journey of One Transfer
+                      {isPayflow ? "The Complete Journey of One Transfer" : isValiant ? "The Complete Journey of an Incident Investigation" : "Architecture Execution Pipeline"}
                     </h3>
                   </div>
 
@@ -696,44 +901,100 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   </div>
                 )}
 
-                {/* 3. Concurrency Strategy: Pessimistic vs Optimistic */}
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
-                  <h3 className="text-base font-bold text-slate-900">
-                    3. Concurrency Strategy: Why Pessimistic Locking Was Chosen
-                  </h3>
-                  <p className="mt-2 text-xs sm:text-sm text-slate-700 leading-relaxed">
-                    {project.layers?.technicalReader.concurrencyDeepDive}
-                  </p>
-
-                  <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
-                    <table className="w-full text-left font-mono text-xs">
-                      <thead className="border-b border-slate-200 bg-slate-100/70 text-[10px] text-slate-500 font-bold uppercase">
-                        <tr>
-                          <th className="px-4 py-2.5">Attribute</th>
-                          <th className="px-4 py-2.5">Optimistic Locking (@Version)</th>
-                          <th className="px-4 py-2.5 text-blue-700">Payflow Pessimistic Locking (SELECT FOR UPDATE)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-700">
-                        <tr>
-                          <td className="px-4 py-2 font-bold text-slate-900">Behavior under 50+ threads</td>
-                          <td className="px-4 py-2 text-red-600">Catastrophic retry storm (85%+ rollbacks)</td>
-                          <td className="px-4 py-2 text-emerald-600 font-semibold">Deterministic queueing (0% retry storm)</td>
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 font-bold text-slate-900">p99 Latency SLA</td>
-                          <td className="px-4 py-2 text-red-600">&gt; 2,200 ms under contention</td>
-                          <td className="px-4 py-2 text-emerald-600 font-semibold">&lt; 114 ms sustained</td>
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 font-bold text-slate-900">Deadlock Prevention</td>
-                          <td className="px-4 py-2">Optimistic checks on commit</td>
-                          <td className="px-4 py-2 text-emerald-600 font-semibold">Strict ascending ID ordering: min(A,B) → max(A,B)</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                {isValiant && (
+                  <div className="space-y-6">
+                    <ValiantAttributionCard />
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 mb-3">
+                        2. Relational Database Model &amp; Immutable Snapshots
+                      </h3>
+                      <ValiantSchemaVisualizer />
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* 3. Concurrency / Query Complexity Strategy */}
+                {isPayflow && (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+                    <h3 className="text-base font-bold text-slate-900">
+                      3. Concurrency Strategy: Why Pessimistic Locking Was Chosen
+                    </h3>
+                    <p className="mt-2 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                      {project.layers?.technicalReader.concurrencyDeepDive}
+                    </p>
+
+                    <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                      <table className="w-full text-left font-mono text-xs">
+                        <thead className="border-b border-slate-200 bg-slate-100/70 text-[10px] text-slate-500 font-bold uppercase">
+                          <tr>
+                            <th className="px-4 py-2.5">Attribute</th>
+                            <th className="px-4 py-2.5">Optimistic Locking (@Version)</th>
+                            <th className="px-4 py-2.5 text-blue-700">Payflow Pessimistic Locking (SELECT FOR UPDATE)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          <tr>
+                            <td className="px-4 py-2 font-bold text-slate-900">Behavior under 50+ threads</td>
+                            <td className="px-4 py-2 text-red-600">Catastrophic retry storm (85%+ rollbacks)</td>
+                            <td className="px-4 py-2 text-emerald-600 font-semibold">Deterministic queueing (0% retry storm)</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-2 font-bold text-slate-900">p99 Latency SLA</td>
+                            <td className="px-4 py-2 text-red-600">&gt; 2,200 ms under contention</td>
+                            <td className="px-4 py-2 text-emerald-600 font-semibold">&lt; 114 ms sustained</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-2 font-bold text-slate-900">Deadlock Prevention</td>
+                            <td className="px-4 py-2">Optimistic checks on commit</td>
+                            <td className="px-4 py-2 text-emerald-600 font-semibold">Strict ascending ID ordering: min(A,B) → max(A,B)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {isValiant && (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+                    <h3 className="text-base font-bold text-slate-900">
+                      3. Correlator Complexity &amp; Prometheus Query Bottlenecks
+                    </h3>
+                    <p className="mt-2 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                      Correlation execution is O(N × M), where N is candidate change events and M is PromQL metric signatures per service.
+                      In high-cardinality environments, naive sequential querying creates network-bound bottlenecks where Go workers spend 95% of time waiting on HTTP roundtrips.
+                      Valiant mitigates this through bounded-channel goroutine worker pools that dispatch Prometheus range queries concurrently, keeping total correlation latency under 85ms.
+                    </p>
+
+                    <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                      <table className="w-full text-left font-mono text-xs">
+                        <thead className="border-b border-slate-200 bg-slate-100/70 text-[10px] text-slate-500 font-bold uppercase">
+                          <tr>
+                            <th className="px-4 py-2.5">Execution Model</th>
+                            <th className="px-4 py-2.5">Sequential PromQL Queries</th>
+                            <th className="px-4 py-2.5 text-purple-700">Valiant Concurrent Goroutine Pools</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          <tr>
+                            <td className="px-4 py-2 font-bold text-slate-900">5 Candidate Changes (15 Queries)</td>
+                            <td className="px-4 py-2 text-red-600">630 ms (15 × 42ms HTTP RTT)</td>
+                            <td className="px-4 py-2 text-emerald-600 font-semibold">&lt; 58 ms (Concurrent batching)</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-2 font-bold text-slate-900">Goroutine Worker Bounding</td>
+                            <td className="px-4 py-2 text-red-600">Single thread blocks on slow queries</td>
+                            <td className="px-4 py-2 text-emerald-600 font-semibold">Max 10 concurrent requests to protect Prometheus</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-2 font-bold text-slate-900">Timeout / Cancel Propagation</td>
+                            <td className="px-4 py-2">Manual timeout handling</td>
+                            <td className="px-4 py-2 text-emerald-600 font-semibold">Standard Go `context.WithTimeout(ctx, 10*time.Second)`</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
                 {/* 4. Event Consistency & Dual-Write Hazard */}
                 <div>
@@ -769,7 +1030,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 {project.layers?.technicalReader.loadTesting && (
                   <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5 sm:p-6">
                     <h3 className="text-base font-bold text-slate-900">
-                      7. k6 Concurrency Load Testing Methodology
+                      {isValiant ? "7. Synthetic Incident Benchmark Methodology" : "7. k6 Concurrency Load Testing Methodology"}
                     </h3>
                     <p className="mt-2 text-xs sm:text-sm text-slate-700 leading-relaxed">
                       {project.layers.technicalReader.loadTesting.methodology}
@@ -777,7 +1038,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
                     <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-6 font-mono text-center">
                       <div className="rounded-xl border border-blue-200 bg-white p-3">
-                        <div className="text-[10px] text-slate-400">VUs</div>
+                        <div className="text-[10px] text-slate-400">{isValiant ? "Workers" : "VUs"}</div>
                         <div className="text-sm font-bold text-slate-900">{project.layers.technicalReader.loadTesting.vus}</div>
                       </div>
                       <div className="rounded-xl border border-blue-200 bg-white p-3">
@@ -825,6 +1086,24 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 <DoubleEntryLedgerDemo />
                 <IdempotencySimulator />
                 <DatabaseSchemaVisualizer />
+              </div>
+            )}
+
+            {activeTab === "simulators" && isValiant && (
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Valiant Interactive Investigation Suite
+                  </h3>
+                  <p className="mt-1 text-xs sm:text-sm text-slate-600">
+                    Test the deterministic incident correlator, baseline vs. impact observation windows, and immutable snapshot schemas.
+                  </p>
+                </div>
+
+                <IncidentTimelineSimulator />
+                <BaselineImpactVisualizer />
+                <ValiantSchemaVisualizer />
+                <ValiantAttributionCard />
               </div>
             )}
 
