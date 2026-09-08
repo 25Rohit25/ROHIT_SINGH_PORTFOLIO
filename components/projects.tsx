@@ -515,7 +515,7 @@ export default function Projects() {
                         onClick={() => setSelectedProjectId(proj.id)}
                         className="font-bold text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <span>Open Full MIT/Harvard Architectural Whitepaper</span>
+                        <span>Explore Interactive System Architecture &amp; Flow</span>
                         <span>→</span>
                       </button>
                     </div>

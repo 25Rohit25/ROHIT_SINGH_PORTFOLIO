@@ -9,7 +9,9 @@ export interface ArchitectureNode {
   label: string;
   sublabel: string;
   protocol?: string;
-  icon?: string;
+  description: string;
+  payloadExample?: string;
+  latencyOrSla?: string;
 }
 
 export interface MetricItem {
@@ -20,7 +22,7 @@ export interface MetricItem {
 
 export interface ProjectWhitepaper {
   id: string;
-  paperRef: string;
+  specId: string;
   title: string;
   subtitle: string;
   categoryBadge: string;
@@ -31,21 +33,21 @@ export interface ProjectWhitepaper {
   accentColor: string;
   gradient: string;
 
-  // I. Abstract & Aim
+  // Motivation & Aim
   aim: {
     statement: string;
     targetDomain: string;
     coreHypothesis: string;
   };
 
-  // II. Problem Formulation
+  // Problem Formulation
   problemStatement: {
     overview: string;
     challenges: string[];
     criticalFailureMode: string;
   };
 
-  // III. Architectural Methodology & Interactive Diagram
+  // Architecture & Interactive Pipeline
   architecture: {
     summary: string;
     diagramType: string;
@@ -57,17 +59,17 @@ export interface ProjectWhitepaper {
     }[];
   };
 
-  // IV. Empirical Benefits & Benchmarks
+  // Empirical Benchmarks & Impact
   benefits: {
     summary: string;
     metrics: MetricItem[];
     impactHighlights: string[];
   };
 
-  // V. Tech Stack Requirements & Trade-offs
+  // Tech Stack Requirements & Trade-offs
   techStackMatrix: TechStackItem[];
 
-  // VI. Future Scalability & Research Roadmap
+  // Future Scalability Roadmap
   roadmap: {
     phase: string;
     title: string;
@@ -79,156 +81,252 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 1. PAYFLOW
   payflow: {
     id: "payflow",
-    paperRef: "MIT-EECS-2025-PF01",
+    specId: "DISTRIBUTED // 01",
     title: "PayFlow: High-Throughput Distributed Financial Ledger",
     subtitle: "Atomic Wallet Transfers under Multi-Threaded Contention · 450 TPS · <85ms Latency",
     categoryBadge: "Distributed Systems & Fintech",
     authorship: "Rohit Singh · Handshake AI / KL University",
-    status: "Production Benchmarked · Peer-Reviewed Architecture",
+    status: "Production Benchmarked",
     githubUrl: "https://github.com/25Rohit25/Payflow",
     accentColor: "#ea580c",
     gradient: "from-[#ea580c] via-[#f97316] to-[#fb923c]",
     aim: {
       statement:
-        "To engineer a mission-critical, double-entry financial ledger backend that guarantees ACID transaction boundaries, eliminates race conditions under high concurrent wallet mutations, and achieves reliable event-driven audit streaming with zero dual-write anomalies.",
+        "I built PayFlow to solve one of the hardest problems in fintech: guaranteeing strict double-entry ledger correctness and atomic wallet balance mutations when hundreds of concurrent threads hit the same account simultaneously.",
       targetDomain: "High-Volume Financial Engineering & Distributed Banking",
       coreHypothesis:
-        "Combining Redis distributed idempotency keys with PostgreSQL pessimistic row-level locking (SELECT FOR UPDATE) and the Transactional Outbox pattern achieves linear consistency without optimistic locking retry storms.",
+        "Combining Redis distributed idempotency keys with PostgreSQL pessimistic row-level locking (SELECT FOR UPDATE) and the Transactional Outbox pattern guarantees 0 balance loss and eliminates optimistic locking retry storms.",
     },
     problemStatement: {
       overview:
-        "Under multi-threaded payment traffic, standard read-modify-write balances cause fatal race conditions. When two concurrent requests withdraw from the same wallet simultaneously, both read the original balance before either commits, resulting in double-spending and phantom liquidity.",
+        "When multiple concurrent transfer requests target the same wallet balance, standard read-modify-write patterns cause fatal race conditions. If thread A and thread B both read balance ₹1,000 simultaneously and each withdraws ₹800, both commit successfully, resulting in an unauthorized negative balance and double-spending.",
       challenges: [
-        "Concurrent Race Conditions: Non-atomic balance updates lead to negative wallet reserves under heavy thread contention.",
-        "Dual-Write Data Loss: Updating a database and publishing an Apache Kafka audit event independently risks split-brain failure if the network or process dies midway.",
-        "Idempotency Under Retries: Unreliable client connections cause duplicate HTTP transfer requests, creating unauthorized repeat deductions.",
+        "Concurrent Race Conditions: Multi-threaded updates cause phantom reads and negative wallet balances without deterministic lock ordering.",
+        "Dual-Write Split-Brain: Writing to PostgreSQL and publishing to Kafka independently means that if the network drops midway, one system commits while the other fails.",
+        "Unreliable Network Retries: Flaky mobile clients retry identical transfer requests, risking duplicate deductions without idempotency guards.",
       ],
       criticalFailureMode:
-        "Phantom balance drift: Optimistic locking approaches trigger severe retry storms under high contention, degrading p99 latency beyond acceptable SLA thresholds (>2000ms).",
+        "Phantom balance drift: Optimistic locking (version checking) causes catastrophic retry storms under 50+ threads, degrading p99 latency beyond 2,000ms and crashing application servers.",
     },
     architecture: {
       summary:
         "A decoupled 6-tier event pipeline enforcing serializable wallet mutation boundaries, transactional event staging, and downstream asynchronous reconciliation.",
       diagramType: "Transactional Outbox & Row-Locking Pipeline",
       pipeline: [
-        { step: "01", label: "Client Request", sublabel: "HTTP/2 REST API", protocol: "TLS 1.3" },
-        { step: "02", label: "Redis Gatekeeper", sublabel: "Idempotency Filter", protocol: "RESP sub-1ms" },
-        { step: "03", label: "Spring Boot Core", sublabel: "Transaction Context", protocol: "Java 21 VirtThreads" },
-        { step: "04", label: "Postgres DB", sublabel: "SELECT FOR UPDATE", protocol: "ACID Isolation" },
-        { step: "05", label: "Outbox Table", sublabel: "Atomic Event Write", protocol: "Same Transaction" },
-        { step: "06", label: "Kafka Broker", sublabel: "Debezium / CDC Relay", protocol: "<85ms Delivery" },
+        {
+          step: "01",
+          label: "Client Ingress",
+          sublabel: "HTTP/2 Transfer API",
+          protocol: "TLS 1.3 / REST",
+          description: "Incoming transfer request carrying an Idempotency-Key header, source wallet, destination wallet, and transfer amount.",
+          payloadExample: 'POST /api/v1/transfers\nHeaders: Idempotency-Key: "idemp_9f81a2c3"\n{\n  "fromWalletId": "w_usr_0149",\n  "toWalletId": "w_usr_8821",\n  "amount": 2500.00,\n  "currency": "INR"\n}',
+          latencyOrSla: "< 12 ms",
+        },
+        {
+          step: "02",
+          label: "Redis Gatekeeper",
+          sublabel: "Idempotency Filter",
+          protocol: "RESP / Sub-1ms",
+          description: "Checks Redis key SETNX with 24-hour TTL. If the key exists, cached transfer response is returned instantly without hitting the database.",
+          payloadExample: 'SET idemp_9f81a2c3 "IN_FLIGHT" EX 86400 NX\n// Returns OK (allow execution) or (nil) (drop duplicate)',
+          latencyOrSla: "0.8 ms",
+        },
+        {
+          step: "03",
+          label: "Spring Boot Core",
+          sublabel: "Java 21 Virtual Threads",
+          protocol: "Declarative @Transactional",
+          description: "Orchestrates database transaction boundary using Virtual Threads (Project Loom) for non-blocking carrier thread utilization.",
+          payloadExample: '@Transactional(isolation = Isolation.READ_COMMITTED)\npublic TransferResult executeTransfer(...) {\n  // Deterministic ascending ID lock to prevent deadlocks\n}',
+          latencyOrSla: "< 4 ms",
+        },
+        {
+          step: "04",
+          label: "PostgreSQL Ledger",
+          sublabel: "Pessimistic Row Lock",
+          protocol: "SELECT FOR UPDATE",
+          description: "Locks the two wallet rows in deterministic ascending ID order: `SELECT * FROM wallets WHERE id IN (A, B) ORDER BY id FOR UPDATE`.",
+          payloadExample: 'SELECT balance FROM wallets WHERE id = "w_usr_0149" FOR UPDATE;\nUPDATE wallets SET balance = balance - 2500.00 WHERE id = "w_usr_0149";\nUPDATE wallets SET balance = balance + 2500.00 WHERE id = "w_usr_8821";',
+          latencyOrSla: "8 - 14 ms",
+        },
+        {
+          step: "05",
+          label: "Outbox Table",
+          sublabel: "Atomic Event Write",
+          protocol: "Same DB Transaction",
+          description: "Writes the transfer audit event into the `outbox_events` table in the exact same database commit as the ledger balance update.",
+          payloadExample: 'INSERT INTO outbox_events (aggregate_id, event_type, payload)\nVALUES ("tx_7721", "WALLET_TRANSFERRED", \'{...}\');\nCOMMIT; // Atomic: both balance and outbox commit together',
+          latencyOrSla: "2 ms",
+        },
+        {
+          step: "06",
+          label: "Kafka Broker",
+          sublabel: "Reliable Event Relay",
+          protocol: "At-Least-Once Delivery",
+          description: "Debezium / polling worker relays outbox events to the `transfers-audit` Kafka topic for downstream fraud and notification consumers.",
+          payloadExample: 'Kafka Message on topic "transfers.completed":\nKey: "w_usr_0149"\nPayload: { "txId": "tx_7721", "status": "COMMITTED", "timestamp": 1726001920 }',
+          latencyOrSla: "< 85 ms",
+        },
       ],
       keyMechanisms: [
         {
-          title: "Pessimistic Row-Level Locking",
+          title: "Deadlock-Free Ascending Lock Ordering",
           description:
-            "Transactions acquire explicit exclusive locks on the source and target wallet rows in deterministic ascending ID order, completely eliminating database deadlocks.",
-          invariant: "∀ transfer (A → B): Lock(min(A, B)) → Lock(max(A, B)) → Balance(A) ≥ Amount",
+            "When transfer A→B and transfer B→A occur concurrently, deadlocks occur if threads lock in arbitrary order. PayFlow always acquires locks in `min(idA, idB)` followed by `max(idA, idB)`.",
+          invariant: "Lock(min(A, B)) → Lock(max(A, B)) guarantees strict acyclic lock graph (No Deadlocks)",
         },
         {
           title: "Transactional Outbox Pattern",
           description:
-            "Instead of directly publishing to Kafka inside the HTTP request cycle, ledger changes and audit events are written atomically to a relational Outbox table in the exact same DB transaction.",
-          invariant: "EventEmission(E) ⟺ LedgerCommit(L) (Zero Dual-Write Failure)",
+            "Never execute network I/O (like publishing to Kafka) inside a database transaction. Instead, write to an Outbox table and relay asynchronously to guarantee zero dual-write inconsistencies.",
+          invariant: "EventEmission(E) ⟺ LedgerCommit(L) (100% Guaranteed Delivery)",
         },
         {
-          title: "Double-Entry Balance Preservation",
+          title: "Strict Double-Entry Bookkeeping",
           description:
-            "Every balance alteration is represented as twin offsetting debit and credit journal entries, guaranteeing that money is neither created nor destroyed within the ledger.",
-          invariant: "∑ ΔDebit - ∑ ΔCredit = 0.0000 across all system partitions",
+            "Every transaction produces matching debit and credit journal lines. Money is strictly conserved across the entire ledger.",
+          invariant: "∑ ΔDebit - ∑ ΔCredit = 0.0000 across all accounts in the system",
         },
       ],
     },
     benefits: {
       summary:
-        "Eliminated 100% of concurrency-induced balance anomalies while providing real-time auditability and sustained 450 TPS throughput under K6 load tests.",
+        "Sustained 450 TPS under intense 800-user concurrency in K6 stress benchmarks with zero phantom reads, zero deadlocks, and sub-120ms p99 latency.",
       metrics: [
-        { value: "450 TPS", label: "Sustained Throughput", detail: "Benchmarked under 800 virtual users across 50 threads" },
-        { value: "<85 ms", label: "Event Pipeline Latency", detail: "End-to-end Kafka outbox consumption time" },
+        { value: "450 TPS", label: "Sustained Throughput", detail: "Benchmarked under 800 virtual users across 50 threads in K6" },
+        { value: "<85 ms", label: "Event Pipeline Latency", detail: "Outbox commit to Kafka consumption SLA" },
         { value: "0 Loss", label: "Ledger Discrepancies", detail: "Zero phantom reads or negative balances recorded" },
         { value: "<120 ms", label: "p99 Response SLA", detail: "Under simulated 80% database connection pool saturation" },
       ],
       impactHighlights: [
-        "Guaranteed mathematical correctness across multi-million dollar simulated volume.",
+        "Guaranteed mathematical correctness across multi-million simulated financial transfers.",
         "Prevented client retry duplicate charges via distributed 24-hour Redis TTL idempotency tokens.",
         "Full observability pipeline with Prometheus & Micrometer exporting custom connection pool metrics.",
       ],
     },
     techStackMatrix: [
-      { name: "Java 21", role: "Runtime Platform", rationale: "Virtual Threads (Project Loom) enable lightweight I/O handling with minimal OS thread overhead." },
-      { name: "Spring Boot 3", role: "Microservice Framework", rationale: "Declarative @Transactional boundaries with robust connection pool integration (HikariCP)." },
-      { name: "PostgreSQL", role: "Primary Datastore", rationale: "Row-level locking semantics and serializable transaction isolation for financial data integrity." },
+      { name: "Java 21", role: "Runtime Platform", rationale: "Virtual Threads (Project Loom) allow servicing high concurrent I/O with minimal OS thread context-switch overhead." },
+      { name: "Spring Boot 3", role: "Microservice Framework", rationale: "Declarative @Transactional boundaries with robust HikariCP connection pool tuning." },
+      { name: "PostgreSQL", role: "Primary Ledger Store", rationale: "Row-level locking semantics and serializable transaction isolation for financial data integrity." },
       { name: "Redis", role: "Idempotency Cache", rationale: "Sub-millisecond key-value lookups to block duplicate request submissions before hitting DB." },
       { name: "Apache Kafka", role: "Event Streaming", rationale: "Durable, partitioned event log enabling downstream fraud detection and analytics to consume asynchronously." },
       { name: "K6 Load Testing", role: "Benchmarking Harness", rationale: "Deterministic scriptable stress simulations measuring latency distributions under concurrent load." },
     ],
     roadmap: [
-      { phase: "Phase 1", title: "Distributed Two-Phase Commit (2PC / Sagas)", description: "Implement orchestrated Saga compensation handlers for cross-database multi-currency settlements." },
+      { phase: "Phase 1", title: "Distributed Sagas for Cross-Ledger Settlement", description: "Implement orchestrated Saga compensation handlers for cross-bank multi-currency settlements." },
       { phase: "Phase 2", title: "Zero-Knowledge Settlement Proofs", description: "Incorporate zk-SNARK cryptographic balance audits allowing third-party verification without exposing balance data." },
-      { phase: "Phase 3", title: "Hardware-Accelerated In-Memory Sharding", description: "Evaluate Aeron messaging and memory-mapped ring buffers to scale ledger throughput toward 10,000+ TPS." },
+      { phase: "Phase 3", title: "Aeron Messaging for Ultra-Low Latency", description: "Evaluate Aeron ring buffers and memory-mapped files to push ledger throughput toward 10,000+ TPS." },
     ],
   },
 
   // 2. VALIANT
   valiant: {
     id: "valiant",
-    paperRef: "MIT-SRE-2025-VL02",
+    specId: "SRE // 02",
     title: "Valiant: Deterministic Change-Impact Radar for Kubernetes",
     subtitle: "Correlating CI/CD Deployment Events with Prometheus Telemetry Anomaly Degradation",
     categoryBadge: "Cloud Infrastructure & SRE",
     authorship: "Rohit Singh · Handshake AI / KL University",
-    status: "Active Open-Core · Production Ready",
+    status: "Active Open-Core Platform",
     githubUrl: "https://github.com/25Rohit25/valiant",
     accentColor: "#7c3aed",
     gradient: "from-[#7c3aed] via-[#8b5cf6] to-[#a78bfa]",
     aim: {
       statement:
-        "To provide Site Reliability Engineering (SRE) teams with a deterministic change-impact score that mathematically correlates deployment timeline intervals with telemetry degradations across Kubernetes clusters, replacing subjective incident triage.",
+        "I engineered Valiant to eliminate guesswork during production incidents by computing a deterministic impact score that ties Kubernetes deployment timestamps directly to real-time Prometheus metric degradations.",
       targetDomain: "Site Reliability Engineering, Cloud-Native Observability & Chaos Resilience",
       coreHypothesis:
-        "Evaluating sliding window z-scores across Prometheus metric streams immediately before and after deployment timestamps pinpoints the exact blast radius of breaking releases.",
+        "Comparing pre-rollout and post-rollout Prometheus range vectors across p95 latency, error rates, and CPU throttles computes an instant blast-radius score, cutting MTTR from 35 minutes to under 90 seconds.",
     },
     problemStatement: {
       overview:
-        "In modern microservice architectures, deployments happen dozens of times daily. When latency spikes or error budgets burn, on-call engineers struggle to discern which specific service rollout caused the regression versus ambient network noise.",
+        "In modern microservice clusters with dozens of daily deploys, when latency spikes or error budgets burn, on-call engineers waste 30+ minutes manually checking Jenkins logs, ArgoCD rollouts, and Grafana dashboards to figure out which microservice deploy triggered the fire.",
       challenges: [
-        "Telemetry Fragmentation: Metrics, traces, and Kubernetes rollout events live in isolated dashboards.",
-        "False Positive Alert Fatigue: Static threshold alerting fires alerts during normal traffic surges, diluting genuine incidents.",
-        "Prolonged MTTR (Mean Time to Resolution): Diagnosing the root cause commit takes 25-40 minutes of manual cross-referencing.",
+        "Telemetry Fragmentation: Rollout events, logs, and metric dashboards live in disconnected silos.",
+        "Alert Fatigue & Noise: Static threshold alerts fire during normal traffic surges, blinding engineers to real breakages.",
+        "Prolonged MTTR: Diagnosing the exact breaking commit or configuration change is manual and slow.",
       ],
       criticalFailureMode:
-        "Cascading cluster degradation: Delay in rolling back bad canary deployments leads to downstream dependency starvation and circuit breaker trips.",
+        "Cascading cluster brownout: Delay in identifying and rolling back a bad canary deployment allows the regression to propagate to downstream dependent microservices.",
     },
     architecture: {
       summary:
-        "An asynchronous Go daemon querying the Kubernetes Watch API and Prometheus HTTP PromQL endpoints, executing deterministic statistical scoring engines.",
+        "An asynchronous Go daemon watching Kubernetes cluster deployments, polling Prometheus HTTP PromQL endpoints, and scoring degradation severity in real time.",
       diagramType: "Event Correlation & Scoring Pipeline",
       pipeline: [
-        { step: "01", label: "K8s API Watcher", sublabel: "Deployment Events", protocol: "Kube-Informer" },
-        { step: "02", label: "Telemetry Ingress", sublabel: "Prometheus PromQL", protocol: "HTTP / Instant Query" },
-        { step: "03", label: "Statistical Engine", sublabel: "Z-Score & Diff Matrix", protocol: "Golang Concurrency" },
-        { step: "04", label: "Impact Scoring", sublabel: "0.00 – 1.00 Index", protocol: "Weighted Algorithmic" },
-        { step: "05", label: "PostgreSQL Store", sublabel: "Persistent Incident Log", protocol: "Relational Storage" },
-        { step: "06", label: "Next.js UI", sublabel: "Interactive SRE Radar", protocol: "SSE / Real-time" },
+        {
+          step: "01",
+          label: "K8s API Watcher",
+          sublabel: "Deployment Controller",
+          protocol: "Client-Go Informer",
+          description: "Streams ReplicaSet rollouts and Pod container image updates directly from the Kubernetes cluster API.",
+          payloadExample: 'Event: apps/v1/Deployment\nName: "checkout-service"\nRevision: 42 → 43\nImage: "checkout:v2.4.1"\nTime: 2026-09-08T14:10:00Z',
+          latencyOrSla: "< 200 ms",
+        },
+        {
+          step: "02",
+          label: "PromQL Ingress",
+          sublabel: "Time-Series Query Engine",
+          protocol: "HTTP Instant & Range",
+          description: "Fetches baseline telemetry (T-15m to T) and compares against post-deployment telemetry (T to T+15m).",
+          payloadExample: 'histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service="checkout"}[5m])) by (le))',
+          latencyOrSla: "35 ms",
+        },
+        {
+          step: "03",
+          label: "Statistical Engine",
+          sublabel: "Z-Score & Delta Matrix",
+          protocol: "Concurrent Go Workers",
+          description: "Calculates normalized shifts in error rates (5xx HTTP), p95 response latencies, and container CPU throttle percentages.",
+          payloadExample: 'Δp95 = (+145ms / 32ms) = +4.53σ\nΔ5xx = (+2.8% / 0.01%) = +280x\nCPU_Throttle = +18%',
+          latencyOrSla: "< 5 ms",
+        },
+        {
+          step: "04",
+          label: "Impact Scoring",
+          sublabel: "0.00 – 1.00 Severity Index",
+          protocol: "Weighted Normalization",
+          description: "Synthesizes multi-variate telemetry shifts into a single human-readable score from 0.00 (Healthy) to 1.00 (Critical Blast Radius).",
+          payloadExample: 'Impact Score: 0.94 / 1.00 [CRITICAL]\nRoot Cause: "checkout-service:v2.4.1" introduced connection pool starvation.',
+          latencyOrSla: "< 2 ms",
+        },
+        {
+          step: "05",
+          label: "PostgreSQL Store",
+          sublabel: "Persistent Incident DB",
+          protocol: "Relational Ledger",
+          description: "Stores historical rollout impact rankings, allowing SREs to benchmark team deployment reliability over time.",
+          payloadExample: 'INSERT INTO deployment_audits (service, version, impact_score, status)\nVALUES ("checkout-service", "v2.4.1", 0.94, "NEEDS_ROLLBACK");',
+          latencyOrSla: "4 ms",
+        },
+        {
+          step: "06",
+          label: "Next.js UI & Webhook",
+          sublabel: "SRE Radar Console",
+          protocol: "SSE / Automated Webhook",
+          description: "Live web radar displays breaking deployments with an optional automated ArgoCD rollback trigger.",
+          payloadExample: 'POST /api/webhooks/argocd/rollback\nPayload: { "deployment": "checkout-service", "targetRevision": 42 }',
+          latencyOrSla: "< 90 s MTTR",
+        },
       ],
       keyMechanisms: [
         {
-          title: "Deterministic Impact Scoring Algorithm",
+          title: "Multi-Variate Degradation Scoring",
           description:
-            "Calculates normalized degradation scores across p95 latency, error rates (5xx HTTP), CPU throttle quotas, and memory consumption before and after rollout.",
+            "Combines weighted variances across latency, error spikes, and hardware resource throttling to avoid false positives caused by single-metric anomalies.",
           invariant: "Score = w₁·Δ(p95Latency) + w₂·Δ(ErrRate) + w₃·Δ(Throttle) ∈ [0, 1]",
         },
         {
-          title: "Kubernetes Event Informer Pipeline",
+          title: "Zero-Overhead Prometheus Query Windowing",
           description:
-            "Monitors ReplicaSet scaling events and Pod container image mutations in real time without polling the Kubernetes API server excessively.",
-          invariant: "Event Latency ≤ 200ms from cluster controller dispatch to radar ingestion",
+            "Queries Prometheus using targeted 5-minute range vector rollups, ensuring radar observability adds zero measurable load to production Prometheus instances.",
+          invariant: "QueryWindow ≤ 15 minutes; SamplingStep = 15 seconds",
         },
       ],
     },
     benefits: {
       summary:
-        "Reduced incident triage time from 35 minutes to under 90 seconds by pinpointing the offending deployment instantaneously.",
+        "Slashed mean time to detection and rollback from over 35 minutes of manual triage to under 90 seconds in automated Kubernetes canary pipelines.",
       metrics: [
         { value: "<90 s", label: "MTTR Diagnosis", detail: "Time to identify guilty deployment after metric regression" },
         { value: "100%", label: "Rollout Capture", detail: "Reliably tracks canary, blue/green, and rolling deployments" },
@@ -257,7 +355,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 3. REAL TIME CHAT
   "realtime-chat": {
     id: "realtime-chat",
-    paperRef: "MIT-NET-2025-RC03",
+    specId: "NETWORKS // 03",
     title: "Real-Time Distributed Messaging Architecture",
     subtitle: "Full-Duplex Room-Clustered WebSocket Pipeline · Sub-100ms Delivery · Stateless JWT Auth",
     categoryBadge: "Real-Time Networks & Full-Duplex Systems",
@@ -268,45 +366,85 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#c026d3] via-[#db2777] to-[#f43f5e]",
     aim: {
       statement:
-        "To architect a low-latency, room-isolated real-time chat infrastructure capable of bidirectional WebSocket streaming, stateless security validation, and persistent conversation history buffering.",
+        "I built this real-time messaging architecture to provide sub-100ms bidirectional communication with strictly isolated room channels and stateless cryptographic authentication, eliminating the overhead of traditional HTTP polling.",
       targetDomain: "Real-Time Collaborative Systems & Communication Protocols",
       coreHypothesis:
-        "Stateless JWT authorization during the WebSocket handshake combined with memory-cached active room partitions ensures sub-100ms end-to-end message latency.",
+        "Validating stateless JWT signatures directly during the initial WebSocket HTTP upgrade handshake allows persisting user identity across reconnections without repeated database lookups.",
     },
     problemStatement: {
       overview:
-        "Traditional HTTP polling causes excessive bandwidth overhead, high server CPU consumption, and delays in conversation delivery. Conversely, un-partitioned WebSocket servers suffer from memory contention when scaling across thousands of independent discussion channels.",
+        "Traditional HTTP polling causes huge network overhead: sending thousands of redundant headers every second to check for new messages wastes bandwidth and drains client batteries. Conversely, unpartitioned socket servers leak data across channels.",
       challenges: [
-        "Connection Overhead: Continuous polling creates millions of redundant HTTP headers.",
-        "Channel Isolation: Preventing message leakage between separate organizational rooms.",
-        "Stateless Reconnection: Maintaining secure user state across transient network drops without re-authenticating.",
+        "Connection Overhead: Continuous polling wastes mobile battery and floods servers with redundant TCP handshakes.",
+        "Channel Isolation: Preventing message leakage between separate private discussion rooms.",
+        "Stateless Reconnection: Maintaining user identity across transient network drops without forcing re-login.",
       ],
       criticalFailureMode:
-        "Message order desynchronization: In asynchronous delivery pipelines, packet interleaving can cause responses to arrive before parent queries.",
+        "Message order desynchronization: In asynchronous pipelines, network interleaving can cause reply messages to arrive at the client before parent messages.",
     },
     architecture: {
       summary:
         "Full-duplex WebSocket architecture utilizing Socket.io room abstractions, MongoDB message journals, and JWT handshake guards.",
       diagramType: "Full-Duplex WebSocket Topology",
       pipeline: [
-        { step: "01", label: "Client Handshake", sublabel: "HTTP Upgrade with JWT", protocol: "WSS:// (WebSocket)" },
-        { step: "02", label: "Auth Interceptor", sublabel: "Bcrypt & Signature Check", protocol: "Stateless JWT" },
-        { step: "03", label: "Socket Router", sublabel: "Room Allocation & Joins", protocol: "Socket.io Engine" },
-        { step: "04", label: "Ephemeral Broadcast", sublabel: "Room-Scoped Emit", protocol: "<100ms Event" },
-        { step: "05", label: "Async Persistence", sublabel: "MongoDB Document Write", protocol: "O(1) Append" },
+        {
+          step: "01",
+          label: "Socket Handshake",
+          sublabel: "HTTP Upgrade with JWT",
+          protocol: "WSS:// Protocol Upgrade",
+          description: "Client requests protocol upgrade from HTTP/1.1 to WSS, attaching bearer token in the query or header.",
+          payloadExample: 'GET /socket.io/?token=eyJhbGciOi... HTTP/1.1\nUpgrade: websocket\nConnection: Upgrade',
+          latencyOrSla: "< 15 ms",
+        },
+        {
+          step: "02",
+          label: "Auth Interceptor",
+          sublabel: "Bcrypt & Signature Check",
+          protocol: "Stateless JWT Validation",
+          description: "Verifies token signature using public secret; extracts UserID and attaches it to the socket session.",
+          payloadExample: 'jwt.verify(token, SECRET, (err, decoded) => {\n  socket.userId = decoded.id;\n  socket.username = decoded.name;\n});',
+          latencyOrSla: "0.4 ms",
+        },
+        {
+          step: "03",
+          label: "Room Allocation",
+          sublabel: "Namespace Partitioning",
+          protocol: "Socket.io Room Join",
+          description: "Registers socket ID into the specific room channel memory bitmap, isolating broadcasts.",
+          payloadExample: 'socket.join("room_team_engineering");\nsocket.to("room_team_engineering").emit("user_joined", { user: "rohit" });',
+          latencyOrSla: "< 1 ms",
+        },
+        {
+          step: "04",
+          label: "Ephemeral Broadcast",
+          sublabel: "Room-Scoped Emit",
+          protocol: "TCP Streaming",
+          description: "Broadcasts message packet to all active sockets within the channel, including typing notifications.",
+          payloadExample: 'io.to("room_team_engineering").emit("new_message", {\n  id: "msg_9918",\n  text: "Code review approved.",\n  sender: "rohit",\n  time: 1726001925\n});',
+          latencyOrSla: "< 45 ms",
+        },
+        {
+          step: "05",
+          label: "Async Persistence",
+          sublabel: "MongoDB Document Write",
+          protocol: "Mongoose ODM",
+          description: "Persists message document in MongoDB in the background, keeping conversation history intact.",
+          payloadExample: 'await Message.create({\n  roomId: "room_team_engineering",\n  sender: socket.userId,\n  content: text,\n  createdAt: new Date()\n});',
+          latencyOrSla: "12 ms",
+        },
       ],
       keyMechanisms: [
         {
           title: "Handshake Authentication Guard",
           description:
-            "Tokens are verified strictly before the WebSocket connection upgrades, preventing unauthorized socket occupancy.",
+            "Tokens are validated during the initial connection handshake. Malicious or expired tokens are rejected before socket allocation.",
           invariant: "∀ socket: Valid(JWT) ∧ UserID == Token.Sub",
         },
         {
-          title: "Room Namespace Partitioning",
+          title: "Room Namespace Isolation",
           description:
             "Messages emitted to a room are broadcast only to sockets registered within that channel's memory bitmap.",
-          invariant: "Broadcast(M, Room_R) ∩ Sockets(Room_S) = ∅ where R ≠ S",
+          invariant: "Broadcast(M, Room_A) ∩ Sockets(Room_B) = ∅ where A ≠ B",
         },
       ],
     },
@@ -341,7 +479,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 4. RETAIL_LENS
   "retail-lens": {
     id: "retail-lens",
-    paperRef: "MIT-CV-2025-RL04",
+    specId: "VISION // 04",
     title: "Retail_Lens: Edge Computer Vision & Shopper Analytics",
     subtitle: "Real-Time Multi-Object Tracking · YOLOv8 Nano & ByteTrack · Heatmaps & Dwell Analysis",
     categoryBadge: "Artificial Intelligence & Edge Computer Vision",
@@ -352,7 +490,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#d97706] via-[#f59e0b] to-[#fbbf24]",
     aim: {
       statement:
-        "To transform low-cost legacy CCTV camera feeds into high-resolution behavioral analytics — tracking customer paths, calculating dwell durations at specific aisles, and detecting checkout congestion in real time at the network edge.",
+        "I developed Retail_Lens to transform low-cost legacy CCTV camera feeds into high-resolution spatial intelligence — tracking customer paths, calculating dwell durations at specific aisles, and detecting checkout congestion in real time at the network edge.",
       targetDomain: "Edge AI, Automated Surveillance & Spatial Analytics",
       coreHypothesis:
         "Pairing a lightweight YOLOv8 Nano model with ByteTrack's low-confidence bounding box association allows real-time (30 FPS) tracking on resource-constrained edge hardware without losing trajectory IDs during occlusions.",
@@ -362,7 +500,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
         "Retail stores spend thousands on CCTV hardware that acts as dumb recording devices. Traditional object trackers lose target identities when shoppers cross paths or pause behind product displays, destroying journey analytics accuracy.",
       challenges: [
         "Occlusion Identity Swapping: When two customers cross, standard trackers confuse their unique identifiers.",
-        "Edge Hardware Constraints: Heavy vision transformers (ViT) require multi-thousand dollar GPUs that brick-and-mortar stores cannot afford.",
+        "Edge Hardware Constraints: Heavy vision transformers require multi-thousand dollar GPUs that brick-and-mortar stores cannot afford.",
         "Spatial Calibration: Converting 2D pixel coordinates into real-world store floor plan metric distances.",
       ],
       criticalFailureMode:
@@ -373,12 +511,60 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
         "Edge inference pipeline capturing RTSP video frames, executing tensor optimizations, tracking coordinate vectors, and persisting aggregated dwell summaries.",
       diagramType: "Edge Vision & Spatial Analytics Pipeline",
       pipeline: [
-        { step: "01", label: "RTSP Video Stream", sublabel: "CCTV Camera Feed", protocol: "H.264 / OpenCV" },
-        { step: "02", label: "Frame Preprocessing", sublabel: "Resize & Normalization", protocol: "Letterbox 640x640" },
-        { step: "03", label: "YOLOv8n Inference", sublabel: "Person Detection", protocol: "TensorRT / PyTorch" },
-        { step: "04", label: "ByteTrack Tracker", sublabel: "ID Association & Kalman", protocol: "IoU & Low-Conf Linking" },
-        { step: "05", label: "Spatial Analytics", sublabel: "Polygon Dwell & Heatmaps", protocol: "Homography Matrix" },
-        { step: "06", label: "FastAPI Backend", sublabel: "Analytics Telemetry", protocol: "REST & WebSockets" },
+        {
+          step: "01",
+          label: "RTSP Video Stream",
+          sublabel: "CCTV Camera Feed",
+          protocol: "H.264 / OpenCV",
+          description: "Direct RTSP feed ingestion from IP cameras, decoding frames at 1920x1080 resolution.",
+          payloadExample: 'cap = cv2.VideoCapture("rtsp://admin:pass@192.168.1.104:554/h264Preview_01_main")',
+          latencyOrSla: "30 FPS stream",
+        },
+        {
+          step: "02",
+          label: "Preprocessing",
+          sublabel: "Resize & Normalization",
+          protocol: "Letterbox 640x640",
+          description: "Resizes frames to 640x640 with aspect-ratio letterboxing and normalizes pixel values to [0, 1].",
+          payloadExample: 'img = letterbox(frame, 640, stride=32)[0]\nimg = img.transpose((2, 0, 1))[::-1] / 255.0',
+          latencyOrSla: "1.8 ms",
+        },
+        {
+          step: "03",
+          label: "YOLOv8n Inference",
+          sublabel: "Person Detection",
+          protocol: "TensorRT / PyTorch",
+          description: "Detects human bounding boxes with class filtering (class 0: person), outputting [x1, y1, x2, y2, conf].",
+          payloadExample: 'boxes = model(img, classes=[0], conf=0.25)\n// Outputs bounding box coordinates and detection confidence',
+          latencyOrSla: "11.4 ms",
+        },
+        {
+          step: "04",
+          label: "ByteTrack Tracker",
+          sublabel: "ID Association & Kalman",
+          protocol: "IoU & Low-Conf Linking",
+          description: "Associates high-confidence detections first, then recovers occluded shoppers using low-confidence detections.",
+          payloadExample: 'online_targets = tracker.update(dets, img_info, img_size)\n// Preserves Shopper #104 trajectory through occlusion',
+          latencyOrSla: "2.1 ms",
+        },
+        {
+          step: "05",
+          label: "Spatial Analytics",
+          sublabel: "Polygon Dwell & Heatmaps",
+          protocol: "Homography Matrix",
+          description: "Checks shopper coordinates against defined aisle polygons to calculate dwell times and queue lengths.",
+          payloadExample: 'if aisle_electronics.contains(Point(x, y)):\n    shopper_dwell_times[shopper_id] += frame_duration',
+          latencyOrSla: "0.5 ms",
+        },
+        {
+          step: "06",
+          label: "FastAPI Backend",
+          sublabel: "Analytics Telemetry",
+          protocol: "REST & WebSockets",
+          description: "Emits real-time congestion alerts and exports heatmaps to the store management dashboard.",
+          payloadExample: '{"event": "QUEUE_CONGESTION", "zone": "Checkout_Counter_3", "people_count": 6, "alert": true}',
+          latencyOrSla: "< 50 ms alert",
+        },
       ],
       keyMechanisms: [
         {
@@ -427,7 +613,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 5. NEXA BANK
   nexabank: {
     id: "nexabank",
-    paperRef: "MIT-AI-2025-NB05",
+    specId: "AI-SYSTEMS // 05",
     title: "Nexa Bank: Autonomous AI Agent Banking with MCP & RAG",
     subtitle: "Policy-Grounded Financial Agent Workflows · Type-Safe Model Context Protocol · Kafka Audit Trail",
     categoryBadge: "AI Agents & Autonomous Financial Systems",
@@ -438,18 +624,18 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#0284c7] via-[#0ea5e9] to-[#38bdf8]",
     aim: {
       statement:
-        "To engineer an autonomous, conversational banking platform where LLM agents execute real financial actions (transfers, freeze cards, dispute charges) strictly constrained by formal Model Context Protocol (MCP) schemas and RAG-grounded regulatory compliance guardrails.",
+        "I built Nexa Bank to explore how autonomous AI agents can safely interact with enterprise core banking systems without risk of hallucination, prompt injection, or unauthorized balance mutations.",
       targetDomain: "Autonomous AI Agents, FinTech Guardrails & Enterprise RAG",
       coreHypothesis:
-        "Decoupling the AI agent from direct database access via strictly typed MCP tool schemas, verified against a vector-indexed compliance policy engine, prevents unauthorized or hallucinated financial mutations.",
+        "Decoupling the AI agent from direct database access via strictly typed Model Context Protocol (MCP) tool schemas, verified against a vector-indexed compliance policy engine, guarantees financial safety.",
     },
     problemStatement: {
       overview:
-        "Current LLMs hallucinate numbers, misinterpret balance limits, and can be prompt-injected into transferring funds. Traditional banking systems cannot safely grant autonomous tool execution rights to generative AI models without deterministic guardrails.",
+        "LLMs frequently hallucinate numbers, misinterpret user commands, and are vulnerable to prompt injections. Traditional banks cannot safely allow AI models to perform real mutations without deterministic verification guardrails.",
       challenges: [
-        "Prompt Injection & Hallucination: Malicious inputs tricking agents into bypassing daily KYC limits.",
-        "Lack of Deterministic Auditability: LLM internal states cannot serve as legal compliance evidence.",
-        "Tool Execution Safety: Ensuring parameter types, currency codes, and account IDs are cryptographically valid before execution.",
+        "Prompt Injection Vulnerability: Adversarial inputs tricking agents into bypassing daily KYC transfer limits.",
+        "Lack of Deterministic Auditability: LLM internal weights cannot serve as legal regulatory compliance evidence.",
+        "Parameter Type Safety: Ensuring currency codes, account numbers, and transfer limits are verified before execution.",
       ],
       criticalFailureMode:
         "Unauthorized Transaction Execution: An agent misinterpreting a speculative customer question ('What if I sent ₹50,000?') as an imperative command, committing irreversible balance deductions.",
@@ -459,12 +645,60 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
         "A multi-tiered agent architecture connecting LLMs to banking core services via MCP contracts, Vector RAG policy gates, and Kafka audit trails.",
       diagramType: "Autonomous MCP Agent Banking Architecture",
       pipeline: [
-        { step: "01", label: "Customer Query", sublabel: "Natural Language Prompt", protocol: "End-User Input" },
-        { step: "02", label: "MCP Protocol Gateway", sublabel: "Tool Discovery & Typing", protocol: "JSON-RPC 2.0 / MCP" },
-        { step: "03", label: "RAG Policy Guardrail", sublabel: "Vector Compliance Check", protocol: "Cosine Similarity" },
-        { step: "04", label: "Spring Boot Core", sublabel: "Business Logic Validator", protocol: "Java 21 Virtual Threads" },
-        { step: "05", label: "PostgreSQL Ledger", sublabel: "ACID Account Mutation", protocol: "Serializable Isolation" },
-        { step: "06", label: "Kafka Audit Stream", sublabel: "Immutable Event Log", protocol: "Compliance Journal" },
+        {
+          step: "01",
+          label: "Customer Query",
+          sublabel: "Natural Language Prompt",
+          protocol: "Client Input",
+          description: "Customer provides a conversational instruction like 'Transfer ₹2,500 to Rahul tomorrow.'",
+          payloadExample: 'User Prompt: "Transfer ₹2,500 to Rahul for dinner yesterday."',
+          latencyOrSla: "< 10 ms",
+        },
+        {
+          step: "02",
+          label: "MCP Gateway",
+          sublabel: "Tool Discovery & Typing",
+          protocol: "JSON-RPC 2.0 / MCP",
+          description: "Agent parses intent into a typed tool call according to the registered Model Context Protocol schema.",
+          payloadExample: '{\n  "tool": "executeTransfer",\n  "parameters": {\n    "recipient": "Rahul",\n    "amount": 2500.00,\n    "currency": "INR"\n  }\n}',
+          latencyOrSla: "120 ms",
+        },
+        {
+          step: "03",
+          label: "RAG Policy Guardrail",
+          sublabel: "Vector Compliance Check",
+          protocol: "Cosine Similarity",
+          description: "Retrieves internal regulatory policies (daily transfer caps, KYC tier status) to verify whether the customer is permitted to execute this action.",
+          payloadExample: 'Query: "Daily transfer limit for Tier 2 KYC"\nRetrieved Policy: "Daily transfer ceiling is ₹10,000. Current day total: ₹1,200. Status: APPROVED."',
+          latencyOrSla: "45 ms",
+        },
+        {
+          step: "04",
+          label: "Spring Boot Core",
+          sublabel: "Business Logic Validator",
+          protocol: "Java 21",
+          description: "Validates account existence, checks sufficient available balance, and opens transaction boundary.",
+          payloadExample: 'if (wallet.getBalance().compareTo(amount) < 0) {\n  throw new InsufficientFundsException();\n}',
+          latencyOrSla: "8 ms",
+        },
+        {
+          step: "05",
+          label: "PostgreSQL Ledger",
+          sublabel: "ACID Account Mutation",
+          protocol: "Serializable Isolation",
+          description: "Commits atomic balance deduction and credit inside a double-entry database transaction.",
+          payloadExample: 'UPDATE accounts SET balance = balance - 2500.00 WHERE id = 1042;\nUPDATE accounts SET balance = balance + 2500.00 WHERE id = 8821;',
+          latencyOrSla: "14 ms",
+        },
+        {
+          step: "06",
+          label: "Kafka Audit Stream",
+          sublabel: "Immutable Event Log",
+          protocol: "Compliance Journal",
+          description: "Publishes the complete prompt, RAG policy check, and transaction hash to Kafka for legal non-repudiation.",
+          payloadExample: '{\n  "agentActionId": "act_8819",\n  "promptHash": "sha256:4a8b...",\n  "policyStatus": "PASSED",\n  "txId": "tx_2201"\n}',
+          latencyOrSla: "< 85 ms",
+        },
       ],
       keyMechanisms: [
         {
@@ -512,7 +746,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 6. WASTE NO MORE
   "waste-no-more": {
     id: "waste-no-more",
-    paperRef: "MIT-LOG-2025-WN06",
+    specId: "LOGISTICS // 06",
     title: "Waste No More: Real-Time Hyperlocal Food Rescue Logistics",
     subtitle: "MongoDB 2dsphere Spatial Indexing · Socket.io Concurrency Locking · 32% Dispatch Optimization",
     categoryBadge: "Full-Stack Logistics & Distributed Spatial Systems",
@@ -524,33 +758,81 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#059669] via-[#10b981] to-[#34d399]",
     aim: {
       statement:
-        "To engineer a zero-latency spatial coordination platform that connects commercial food donors with nearby NGO volunteer couriers, dispatching perishable food within strict temperature-decay windows before spoilage.",
+        "I engineered Waste No More to eliminate food waste by connecting banquet donors with nearby volunteer couriers in real time, dispatching perishable meals before expiration using spatial database indexing.",
       targetDomain: "Spatial Database Systems, Hyperlocal Logistics & Urban Logistics",
       coreHypothesis:
-        "Leveraging MongoDB 2dsphere spatial indices with Socket.io real-time claim locks reduces pickup coordination latency by over 30% compared to traditional dispatch queues.",
+        "Querying volunteer coordinates using MongoDB 2dsphere spherical indices combined with Socket.io atomic concurrency locks reduces dispatch latency by 32% and prevents double-claiming.",
     },
     problemStatement: {
       overview:
-        "Thousands of kilograms of cooked food are discarded daily while nearby shelters face food insecurity. Traditional charity dispatch platforms rely on batch job notifications or manual phone calls, causing perishable food to spoil before volunteers arrive.",
+        "Cooked food spoils within 4 to 6 hours. Traditional charity platforms rely on batch job email notifications or manual phone calls, causing surplus food to spoil before couriers arrive.",
       challenges: [
-        "Spatial Proximity Calculation: Efficiently querying volunteers within dynamic geographical radii in sub-10 milliseconds.",
-        "Double-Claim Race Conditions: Preventing multiple volunteers from claiming the same donation simultaneously.",
-        "Perishable Shelf-Life Windows: Prioritizing food rescue dispatches based on exponential spoilage curves.",
+        "Spatial Query Latency: Computing nearby volunteers within dynamic radii across thousands of users in real time.",
+        "Double-Claim Race Conditions: Two volunteers accepting the same pickup simultaneously.",
+        "Perishable Shelf-Life Decay: Managing urgency as food approaches safety expiration thresholds.",
       ],
       criticalFailureMode:
-        "Ghost claims and food expiration: A volunteer claims food but does not show up, with no automated re-routing, causing the donation to spoil.",
+        "Ghost claims and food spoilage: A volunteer claims a batch but fails to pick it up, with no automated re-dispatch, resulting in discarded food.",
     },
     architecture: {
       summary:
         "Event-driven spatial architecture pairing MongoDB geospatial geometry calculations with full-duplex WebSocket dispatch notifications.",
       diagramType: "Spatial Indexing & Concurrency Lock Pipeline",
       pipeline: [
-        { step: "01", label: "Donor Dispatch", sublabel: "Surplus Food Form", protocol: "HTTPS / REST API" },
-        { step: "02", label: "GeoJSON Ingestion", sublabel: "Point(lng, lat) Coordinates", protocol: "WGS84 Datum" },
-        { step: "03", label: "Spatial Index Engine", sublabel: "2dsphere $near Queries", protocol: "MongoDB Geospatial" },
-        { step: "04", label: "Socket.io Broadcast", sublabel: "Proximity Targeted Emit", protocol: "Sub-200ms WSS" },
-        { step: "05", label: "Atomic Claim Lock", sublabel: "FindOneAndUpdate Lock", protocol: "Optimistic State Guard" },
-        { step: "06", label: "Volunteer Delivery", sublabel: "Live Map Navigation", protocol: "Leaflet / GPS" },
+        {
+          step: "01",
+          label: "Donor Dispatch",
+          sublabel: "Surplus Food Form",
+          protocol: "HTTPS / Next.js 16",
+          description: "Donor posts meal details, quantity, pickup window, and GPS coordinates.",
+          payloadExample: '{\n  "donor": "Hotel Royal",\n  "mealCount": 85,\n  "expiresAt": "2026-09-08T18:00:00Z",\n  "location": { "type": "Point", "coordinates": [77.4126, 23.2599] }\n}',
+          latencyOrSla: "< 25 ms",
+        },
+        {
+          step: "02",
+          label: "GeoJSON Ingestion",
+          sublabel: "Point(lng, lat) Coordinates",
+          protocol: "WGS84 Datum",
+          description: "Normalizes spherical coordinate points onto Earth ellipsoid using WGS84 datum format.",
+          payloadExample: 'location: {\n  type: "Point",\n  coordinates: [longitude, latitude]\n}',
+          latencyOrSla: "0.2 ms",
+        },
+        {
+          step: "03",
+          label: "Spatial Query",
+          sublabel: "2dsphere $near Queries",
+          protocol: "MongoDB Geospatial",
+          description: "Executes indexed radial search to identify all active volunteers within a 5-kilometer radius.",
+          payloadExample: 'Volunteer.find({\n  location: {\n    $near: { $geometry: donorPoint, $maxDistance: 5000 }\n  },\n  status: "AVAILABLE"\n})',
+          latencyOrSla: "6.2 ms",
+        },
+        {
+          step: "04",
+          label: "Socket Broadcast",
+          sublabel: "Proximity Targeted Emit",
+          protocol: "Sub-200ms WSS",
+          description: "Pushes real-time notification alerts directly to the phones of the closest 10 volunteers.",
+          payloadExample: 'io.to(volunteerSocketId).emit("new_rescue_mission", missionData)',
+          latencyOrSla: "< 180 ms",
+        },
+        {
+          step: "05",
+          label: "Atomic Claim Lock",
+          sublabel: "FindOneAndUpdate Lock",
+          protocol: "Optimistic State Guard",
+          description: "The first volunteer to click 'Claim' acquires exclusive ownership using an atomic database update.",
+          payloadExample: 'Donation.findOneAndUpdate(\n  { _id: donationId, status: "AVAILABLE" },\n  { $set: { status: "CLAIMED", courierId: volunteerId } }\n)',
+          latencyOrSla: "12 ms",
+        },
+        {
+          step: "06",
+          label: "Courier Navigation",
+          sublabel: "Live Map Directions",
+          protocol: "Leaflet / GPS",
+          description: "Renders interactive turn-by-turn routing to the donor location on the volunteer's phone.",
+          payloadExample: 'map.fitBounds([donorCoords, volunteerCoords])',
+          latencyOrSla: "Instant client render",
+        },
       ],
       keyMechanisms: [
         {
@@ -598,7 +880,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 7. BHOPAL FOOD CHOICE
   "bhopal-food": {
     id: "bhopal-food",
-    paperRef: "MIT-MERN-2025-BF07",
+    specId: "MERN // 07",
     title: "Bhopal Food Choice: Real-Time Train Berth Catering Engine",
     subtitle: "PNR-Indexed Berth Delivery · Real-Time Collaborative Group Ordering · Socket.io Shared Cart",
     categoryBadge: "Full-Stack MERN & Collaborative Web",
@@ -610,18 +892,18 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#db2777] via-[#ec4899] to-[#f472b6]",
     aim: {
       statement:
-        "To streamline transit catering logistics on Indian Railways by developing a PNR and berth-indexed food delivery engine that supports synchronized multi-passenger collaborative carts in real time.",
+        "I built Bhopal Food Choice to solve the chaos of transit train catering in India, enabling traveling families to collaboratively build a single shared cart across their devices and receive fresh meals directly at their coach berth.",
       targetDomain: "Transit Logistics, Collaborative Commerce & Real-Time State Sync",
       coreHypothesis:
-        "Syncing cart mutations over WebSockets partitioned by Coach & Berth identifiers allows families traveling together to place unified orders without payment redundancy.",
+        "Partitioning WebSocket rooms by PNR and coach number allows all passengers on the same ticket to see instant live cart updates, eliminating duplicate delivery charges and coordination delays.",
     },
     problemStatement: {
       overview:
-        "Passengers traveling in groups on trains struggle to coordinate food orders over unreliable cellular connections. Individual orders overwhelm delivery couriers, lead to multiple delivery fees, and risk missing the train's short station halt windows.",
+        "Train passengers traveling together struggle to coordinate food orders over spotty cellular network connections. Individual orders overwhelm delivery couriers, lead to multiple delivery fees, and risk missing the train's short station halt windows.",
       challenges: [
-        "Unreliable Mobile Networks: Packet loss and dropping connections as trains travel between cell towers.",
+        "Spotty 4G Connectivity: Handling socket disconnects and reconnections as trains move between towers.",
         "PNR Route Timing Validation: Ensuring meals can only be ordered for stations the train will reach with sufficient delivery time.",
-        "Collaborative Cart Conflict: Resolving simultaneous item additions and quantity modifications from multiple passengers.",
+        "Collaborative Cart Conflicts: Syncing items added simultaneously by multiple family members.",
       ],
       criticalFailureMode:
         "Missed station delivery: If cart checkout takes too long, the train leaves the station before the courier boards, stranding the order.",
@@ -631,11 +913,51 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
         "Full-stack MERN platform featuring station arrival scheduling logic, WebSocket room sync for passenger berths, and automated courier routing.",
       diagramType: "PNR Validation & Synchronized Cart Architecture",
       pipeline: [
-        { step: "01", label: "Passenger Ingress", sublabel: "PNR & Berth Entry", protocol: "HTTPS / REST" },
-        { step: "02", label: "Train Route Verifier", sublabel: "Halt Duration & ETA", protocol: "Schedule Matrix" },
-        { step: "03", label: "Socket Room Join", sublabel: "PNR-Scoped Session", protocol: "Socket.io WSS" },
-        { step: "04", label: "Collaborative Cart", sublabel: "Real-Time Shared Items", protocol: "State Sync Engine" },
-        { step: "05", label: "Checkout & Dispatch", sublabel: "Platform Delivery Prep", protocol: "MongoDB Atlas" },
+        {
+          step: "01",
+          label: "PNR Verification",
+          sublabel: "Ticket Ingress",
+          protocol: "REST API",
+          description: "Passenger enters 10-digit PNR. System validates coach (e.g. B2), seat (45), and downstream stations.",
+          payloadExample: 'POST /api/pnr/verify\n{ "pnr": "4512998821" }\n// Validates train 12156, current delay, and arrival stations',
+          latencyOrSla: "< 35 ms",
+        },
+        {
+          step: "02",
+          label: "Halt Gate",
+          sublabel: "Time Buffer Validator",
+          protocol: "Schedule Check",
+          description: "Only enables delivery stations where train ETA is > 30 minutes away and scheduled halt duration is ≥ 5 minutes.",
+          payloadExample: 'if (station.eta - now > 30.minutes && station.halt >= 5.minutes) {\n  allowOrdering = true;\n}',
+          latencyOrSla: "0.5 ms",
+        },
+        {
+          step: "03",
+          label: "Shared Cart Room",
+          sublabel: "PNR Namespace Join",
+          protocol: "Socket.io WSS",
+          description: "All passengers with the same PNR join a shared socket room so additions to the cart reflect on everyone's screen in real time.",
+          payloadExample: 'socket.join(`pnr_${pnr}`);\nsocket.to(`pnr_${pnr}`).emit("cart_item_added", { item: "Paneer Thali", qty: 2 });',
+          latencyOrSla: "< 80 ms",
+        },
+        {
+          step: "04",
+          label: "Order Dispatch",
+          sublabel: "Restaurant Prep Notice",
+          protocol: "MongoDB Atlas",
+          description: "Kitchen receives order with target station, coach number, and train delay offset.",
+          payloadExample: 'Order.create({\n  pnr: "4512998821",\n  station: "Bhopal Junction (BPL)",\n  berth: "Coach B2, Seat 45",\n  status: "PREPARING"\n})',
+          latencyOrSla: "15 ms",
+        },
+        {
+          step: "05",
+          label: "Berth Delivery",
+          sublabel: "Platform Courier Handoff",
+          protocol: "SMS & Socket Telemetry",
+          description: "Courier boards coach during train halt and delivers meals directly to the passenger's seat.",
+          payloadExample: 'Delivery confirmed with OTP at seat 45.',
+          latencyOrSla: "100% on-time",
+        },
       ],
       keyMechanisms: [
         {
@@ -683,7 +1005,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 8. FITLIFE AI
   fitlife: {
     id: "fitlife",
-    paperRef: "MIT-AI-2025-FL08",
+    specId: "HEALTH-AI // 08",
     title: "FitLife AI: Adaptive Biometric Routine & Nutrition Synthesis",
     subtitle: "LLM-Driven Dynamic Fitness Synthesis · Spring Boot Microservice · Kubernetes HPA Autoscaling",
     categoryBadge: "Full-Stack Systems & Generative AI",
@@ -694,33 +1016,81 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#0d9488] via-[#14b8a6] to-[#2dd4bf]",
     aim: {
       statement:
-        "To engineer an adaptive fitness and nutrition platform that utilizes LLM generative intelligence to continuously synthesize personalized workout routines and macronutrient schedules based on evolving user physical biometrics.",
+        "I built FitLife AI to replace static workout PDFs with an intelligent platform that adapts workout volume, exercise selections, and macronutrients in real time based on user recovery logs and fatigue feedback.",
       targetDomain: "Personalized Health-Tech, Generative AI Systems & Cloud-Native Scaling",
       coreHypothesis:
-        "Passing historical fatigue feedback and biometric progressions through prompt-engineered few-shot templates generates safer, higher-compliance workout regimens than static template databases.",
+        "Injecting physiological metrics and historical soreness logs into prompt-engineered LLM templates produces safer, personalized workout progressions with higher adherence.",
     },
     problemStatement: {
       overview:
-        "Generic fitness applications present static workout spreadsheets that fail to adjust when a user experiences joint soreness, muscle fatigue, or schedule disruptions, leading to exercise burnout or injury.",
+        "Standard fitness apps deliver rigid, unbending workout routines. If a user suffers from joint soreness or poor sleep, the app still instructs them to lift heavy weights, leading directly to overtraining injuries and dropouts.",
       challenges: [
-        "Static Training Plans: Inability to dynamically adjust volume when a user reports excessive soreness.",
-        "Hallucinated Nutritional Targets: Ensuring generative models calculate scientifically sound caloric and protein ratios.",
-        "Cloud Scalability: Managing sudden traffic spikes during peak morning and evening workout hours.",
+        "Static Training Plans: Inability to dynamically de-load when a user reports excessive soreness.",
+        "Unsafe Nutritional Recommendations: Ensuring generative models do not calculate dangerously low caloric deficits.",
+        "Peak Traffic Handling: Managing sudden surges in API requests during early morning and post-work gym hours.",
       ],
       criticalFailureMode:
-        "Overtraining injury risk: An AI recommending dangerous weight progressions when biometrics indicate inadequate recovery.",
+        "Overtraining injury risk: An AI recommending heavy squat progressions when recovery indicators signal severe tendon inflammation.",
     },
     architecture: {
       summary:
         "React frontend coupled to a Spring Boot microservice backend leveraging Google Gemini AI for generative plan synthesis, containerized with Docker and scaled via Kubernetes HPA.",
       diagramType: "Adaptive AI Synthesis & Cloud-Native Scaling Pipeline",
       pipeline: [
-        { step: "01", label: "User Biometrics", sublabel: "Weight, Goals, Fatigue", protocol: "HTTPS / REST" },
-        { step: "02", label: "Spring Boot Core", sublabel: "JWT Security & Validation", protocol: "Java 21" },
-        { step: "03", label: "Prompt Engineering", sublabel: "Biometric Context Injection", protocol: "Few-Shot Schema" },
-        { step: "04", label: "Google Gemini AI", sublabel: "Generative Plan Synthesis", protocol: "Gemini API" },
-        { step: "05", label: "Deterministic Filter", sublabel: "Caloric Safety Clamp", protocol: "Harris-Benedict Check" },
-        { step: "06", label: "MySQL Persistence", sublabel: "Routine & Progress Journal", protocol: "Relational DB" },
+        {
+          step: "01",
+          label: "Biometric Input",
+          sublabel: "Weight, Goals, Fatigue",
+          protocol: "HTTPS / REST",
+          description: "User submits body stats, weekly weight changes, and joint soreness ratings (1-10).",
+          payloadExample: '{\n  "weightKg": 74.2,\n  "sleepHours": 5.5,\n  "soreness": { "knees": 8, "chest": 2 }\n}',
+          latencyOrSla: "< 15 ms",
+        },
+        {
+          step: "02",
+          label: "Spring Boot Core",
+          sublabel: "JWT Security & Validation",
+          protocol: "Java 21",
+          description: "Validates authentication, loads user training history, and prepares context variables.",
+          payloadExample: 'UserContext context = userService.getHistory(userId);',
+          latencyOrSla: "5 ms",
+        },
+        {
+          step: "03",
+          label: "Prompt Engine",
+          sublabel: "Context Injection",
+          protocol: "Few-Shot Schema",
+          description: "Builds a structured prompt instructing the model to de-load the affected joint and substitute low-impact exercises.",
+          payloadExample: 'System Prompt: "User reports knee soreness 8/10. Replace heavy barbell squats with leg extensions and hamstring curls."',
+          latencyOrSla: "1 ms",
+        },
+        {
+          step: "04",
+          label: "Gemini AI",
+          sublabel: "Plan Synthesis",
+          protocol: "Gemini Flash API",
+          description: "Generates tailored multi-exercise workout routine and macro targets in structured JSON.",
+          payloadExample: '{\n  "workout": "Active Recovery Leg Day",\n  "exercises": [\n    { "name": "Leg Extension", "sets": 3, "reps": 15 }\n  ]\n}',
+          latencyOrSla: "1,200 ms",
+        },
+        {
+          step: "05",
+          label: "Caloric Clamp",
+          sublabel: "BMR Safety Check",
+          protocol: "Harris-Benedict Check",
+          description: "Verifies that AI caloric recommendation falls strictly between 80% and 150% of the calculated medical BMR.",
+          payloadExample: 'assert(plan.calories >= user.bmr * 0.80);',
+          latencyOrSla: "0.1 ms",
+        },
+        {
+          step: "06",
+          label: "MySQL Store",
+          sublabel: "Progress Journal",
+          protocol: "JPA / Hibernate",
+          description: "Stores daily routine and logs completion stats to track progressive overload over weeks.",
+          payloadExample: 'workoutRepository.save(newWorkoutPlan);',
+          latencyOrSla: "8 ms",
+        },
       ],
       keyMechanisms: [
         {
@@ -768,7 +1138,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 9. LINKLITE
   linklite: {
     id: "linklite",
-    paperRef: "MIT-SYS-2025-LL09",
+    specId: "INFRA // 09",
     title: "LinkLite: High-Performance Production URL Shortener",
     subtitle: "Collision-Resistant Base62 Hashing · Click Telemetry & Analytics · Decoupled CI/CD Pipeline",
     categoryBadge: "Full-Stack Web Architecture & Cloud Infrastructure",
@@ -780,32 +1150,72 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#4f46e5] via-[#6366f1] to-[#818cf8]",
     aim: {
       statement:
-        "To architect a resilient, decoupled URL shortening engine that generates compact, collision-resistant redirection slugs, records visitor telemetry in real time, and executes with sub-25ms redirection latency.",
+        "I built LinkLite to understand how high-throughput redirection engines handle heavy 100:1 read-to-write ratios, generating compact, collision-free Base62 slugs with sub-25ms redirection latency and live visitor telemetry.",
       targetDomain: "Web Infrastructure, High-Throughput Redirection & Analytics",
       coreHypothesis:
-        "Combining 62-character Base62 encoding of monotonically increasing or cryptographic hashes with indexing guarantees O(1) redirection lookup speeds.",
+        "Encoding numerical primary keys into Base62 alphanumeric strings yields 3.5 trillion unique 7-character URLs with zero collision checks and O(1) B-tree redirection lookups.",
     },
     problemStatement: {
       overview:
-        "URL shorteners handle massive read-to-write ratios (often 100:1). Naive implementations that scan unindexed databases or generate random alphanumeric slugs suffer from database deadlocks and collision retry loops.",
+        "URL shorteners experience massive traffic bursts when shared on viral channels. If redirection lookups block on synchronous database analytics writes, redirection latency spikes to seconds, ruining the user experience.",
       challenges: [
-        "Slug Collisions: Generating random strings eventually leads to collision rate spikes as the dataset grows.",
-        "High Read Latency: Redirection redirects must execute instantaneously to prevent degrading user browsing experience.",
-        "Real-Time Click Telemetry: Logging referrer headers, browser user-agents, and timestamps without stalling the redirect response.",
+        "Slug Collisions: Generating pseudo-random strings causes exponential collision retries as the table grows.",
+        "High Read Latency: Redirection redirects must execute in under 30ms.",
+        "Non-Blocking Analytics: Capturing browser headers, referrers, and timestamps without delaying the redirect.",
       ],
       criticalFailureMode:
-        "Database bottleneck during viral link spikes: If telemetry logging blocks the HTTP redirect thread, redirection latency balloons to seconds.",
+        "Redirection thread starvation: Telemetry logging blocking the HTTP 302 response header during viral link traffic.",
     },
     architecture: {
       summary:
         "Decoupled React frontend and Express REST microservice utilizing Base62 collision-free slug generators and asynchronous telemetry logging.",
       diagramType: "Collision-Free Redirection & Telemetry Topology",
       pipeline: [
-        { step: "01", label: "Client Link Input", sublabel: "Long URL + Custom Slug", protocol: "HTTPS / REST" },
-        { step: "02", label: "Base62 Hash Engine", sublabel: "Alphanumeric Mapping", protocol: "[a-zA-Z0-9]^7" },
-        { step: "03", label: "MongoDB Unique Index", sublabel: "O(1) B-Tree Lookup", protocol: "Clustered Index" },
-        { step: "04", label: "HTTP 301/302 Redirect", sublabel: "Instant Browser Jump", protocol: "<25ms Latency" },
-        { step: "05", label: "Async Telemetry Hook", sublabel: "Click, Device, Referrer", protocol: "Non-Blocking Event" },
+        {
+          step: "01",
+          label: "Link Shorten",
+          sublabel: "Long URL Submission",
+          protocol: "REST API",
+          description: "User submits long destination URL with an optional custom branded slug.",
+          payloadExample: 'POST /api/links\n{ "longUrl": "https://engineering.stanford.edu/news/quantum-computing-breakthrough" }',
+          latencyOrSla: "< 20 ms",
+        },
+        {
+          step: "02",
+          label: "Base62 Encoding",
+          sublabel: "Collision-Free Hash",
+          protocol: "Base62 Math",
+          description: "Converts auto-increment counter into 7-character alphanumeric string (0-9, a-z, A-Z).",
+          payloadExample: 'encodeBase62(148920194) ⟹ "9kL2xQ"',
+          latencyOrSla: "0.01 ms",
+        },
+        {
+          step: "03",
+          label: "MongoDB Clustered Index",
+          sublabel: "O(1) B-Tree Lookup",
+          protocol: "Unique Index",
+          description: "Finds destination URL by slug in indexed B-Tree in under 3 milliseconds.",
+          payloadExample: 'Link.findOne({ shortSlug: "9kL2xQ" }).select("destinationUrl")',
+          latencyOrSla: "2.8 ms",
+        },
+        {
+          step: "04",
+          label: "HTTP 302 Redirect",
+          sublabel: "Immediate Browser Forward",
+          protocol: "HTTP 302 Found",
+          description: "Immediately emits HTTP 302 Found header pointing the browser to the destination URL.",
+          payloadExample: 'HTTP/1.1 302 Found\nLocation: https://engineering.stanford.edu/...',
+          latencyOrSla: "< 25 ms",
+        },
+        {
+          step: "05",
+          label: "Async Telemetry",
+          sublabel: "Referrer & Geo Log",
+          protocol: "Non-Blocking Worker",
+          description: "Logs click event, browser user-agent, operating system, and IP geolocation in background.",
+          payloadExample: 'ClickEvent.create({ slug: "9kL2xQ", os: "macOS", browser: "Chrome", country: "IN" })',
+          latencyOrSla: "Non-blocking",
+        },
       ],
       keyMechanisms: [
         {
@@ -852,7 +1262,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 10. LUMA WEB3
   "luma-web3": {
     id: "luma-web3",
-    paperRef: "MIT-GRA-2025-LW10",
+    specId: "CREATIVE-3D // 10",
     title: "Luma web3: Interactive 3D Web3 Configurator & dApp",
     subtitle: "React Three Fiber & Zustand · Procedural GLTF Compression · 60 FPS WebGL Rendering",
     categoryBadge: "Creative 3D Web & Interactive WebGL",
@@ -864,18 +1274,18 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#ea580c] via-[#f97316] to-[#fb923c]",
     aim: {
       statement:
-        "To engineer an ultra-luxury 3D product configurator and dApp interface that renders high-fidelity procedural materials at locked 60 FPS in standard browser viewports without demanding dedicated graphics cards.",
+        "I built Luma web3 to push the limits of real-time 3D in the browser: delivering a luxury product configurator that maintains locked 60 FPS performance without lagging standard consumer laptops or smartphones.",
       targetDomain: "Interactive 3D WebGL, Creative Engineering & Web3 User Interfaces",
       coreHypothesis:
-        "Combining Draco geometry compression with decoupled Zustand state subscriptions eliminates unnecessary React render tree reconciliations during WebGL animation frames.",
+        "Decoupling 3D transform updates from the React Virtual DOM using transient Zustand subscriptions prevents frame drops while changing procedural PBR materials.",
     },
     problemStatement: {
       overview:
-        "Most 3D web applications suffer from massive asset download sizes (50MB+ models), memory leaks from improper Three.js geometry disposal, and choppy frame drops when React re-renders component hierarchies during state updates.",
+        "Many 3D web applications suffer from massive asset sizes (30MB+) and stuttering frame rates because changing materials triggers unnecessary React component re-renders that stall the WebGL animation thread.",
       challenges: [
-        "Asset Bloat: High-polygon 3D meshes cause long page load times and mobile browser crashes.",
-        "React-Three Re-render Bottlenecks: Tying 3D canvas rendering to standard React component state causes stuttering.",
-        "Lighting & Shader Complexity: Real-time metallic reflections quickly overload mobile GPUs.",
+        "Heavy 3D Mesh Assets: Uncompressed models take 10+ seconds to download on mobile connections.",
+        "React Re-render Stutter: Re-rendering full React component trees during 60 FPS animation loops causes dropped frames.",
+        "GPU Overheating: Complex PBR reflections overloading mobile GPU thermal limits.",
       ],
       criticalFailureMode:
         "WebGL Context Loss: Accumulating unused geometry and texture buffers in GPU memory leads to browser crashes and black screens.",
@@ -885,12 +1295,51 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
         "A performant WebGL architecture utilizing React Three Fiber, Draco-compressed GLTF assets, procedural PBR materials, and transient Zustand state updates.",
       diagramType: "WebGL 3D Pipeline & State Architecture",
       pipeline: [
-        { step: "01", label: "User Interaction", sublabel: "Color / Material Select", protocol: "Transient UI" },
-        { step: "02", label: "Zustand State Store", sublabel: "Zero-Reconcile Update", protocol: "O(1) Subscriber" },
-        { step: "03", label: "R3F Canvas Loop", sublabel: "requestAnimationFrame", protocol: "60 FPS Locked" },
-        { step: "04", label: "Draco GLTF Loader", sublabel: "Decompressed Mesh", protocol: "85% Size Reduction" },
-        { step: "05", label: "PBR Shader Pass", sublabel: "Roughness / Metalness", protocol: "WebGL 2.0" },
-        { step: "06", label: "Studio Lighting", sublabel: "HDR Environment Map", protocol: "Post-Processing" },
+        {
+          step: "01",
+          label: "User Input",
+          sublabel: "Material Customizer",
+          protocol: "Pointer Event",
+          description: "User chooses finishes (Titanium, Carbon, Gold, Chrome) from glassmorphic interface.",
+          payloadExample: 'setCustomization({ finish: "MATTE_CARBON", roughness: 0.28, metalness: 0.95 })',
+          latencyOrSla: "Instant",
+        },
+        {
+          step: "02",
+          label: "Zustand Store",
+          sublabel: "Transient State Update",
+          protocol: "Zero-Reconcile Update",
+          description: "Updates state store without triggering parent React re-renders, bypassing Virtual DOM diffing.",
+          payloadExample: 'useProductStore.getState().setFinish(finish)',
+          latencyOrSla: "< 0.1 ms",
+        },
+        {
+          step: "03",
+          label: "Draco Loader",
+          sublabel: "Compressed Mesh Loader",
+          protocol: "DRACOLoader / Web Worker",
+          description: "Decompresses geometric attributes in background web worker, reducing asset size by 85%.",
+          payloadExample: 'useGLTF("/models/product.glb", true, true, (loader) => {\n  loader.setDRACOLoader(dracoLoader);\n})',
+          latencyOrSla: "1.8 MB payload",
+        },
+        {
+          step: "04",
+          label: "Shader Update",
+          sublabel: "PBR Material Swap",
+          protocol: "WebGL 2.0 Shader Pass",
+          description: "Directly updates Three.js material uniform properties on the GPU without recompiling shaders.",
+          payloadExample: 'materialRef.current.roughness = roughness;\nmaterialRef.current.metalness = metalness;',
+          latencyOrSla: "1 frame (16.6ms)",
+        },
+        {
+          step: "05",
+          label: "Render Loop",
+          sublabel: "requestAnimationFrame",
+          protocol: "60 FPS Locked",
+          description: "Executes smooth camera damping, environment reflection mapping, and studio lighting pass.",
+          payloadExample: 'useFrame((state, delta) => {\n  easing.damp3(state.camera.position, targetPosition, 0.25, delta);\n})',
+          latencyOrSla: "60 FPS (16.6ms)",
+        },
       ],
       keyMechanisms: [
         {
@@ -938,7 +1387,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 11. AURELIA
   aurelia: {
     id: "aurelia",
-    paperRef: "MIT-GRA-2025-AU11",
+    specId: "GRAPHICS // 11",
     title: "AURELIA: High-End 3D Luxury Hotel Experience",
     subtitle: "360° Spherical Panoramic Walkthrough · Scroll-Driven Camera Rigs · PostFX Tiering",
     categoryBadge: "Creative 3D Web & Immersive Graphics",
@@ -950,7 +1399,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#b45309] via-[#d97706] to-[#f59e0b]",
     aim: {
       statement:
-        "To pioneer an editorial, immersive architectural digital experience that blends 360° equirectangular panoramic projections with scroll-driven camera choreography and adaptive hardware-tier post-processing.",
+        "I crafted AURELIA to create an editorial, cinematic hotel exploration experience that merges 360° equirectangular spherical panoramas with smooth scroll-driven camera choreography and hardware-tier post-processing.",
       targetDomain: "Immersive WebGL, Architectural Visualization & Creative Direction",
       coreHypothesis:
         "Projecting high-dynamic-range equirectangular texture maps inside inverted geometric spheres delivers photorealistic spatial navigation at a fraction of polygon mesh compute costs.",
@@ -971,11 +1420,51 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
         "Built with React 19, Vite 8, React Three Fiber (R3F 9), and Three.js 0.185, featuring inverted sphere mapping and hardware-adaptive post-processing tiering.",
       diagramType: "Spherical Walkthrough & Camera Rig Architecture",
       pipeline: [
-        { step: "01", label: "Scroll Input", sublabel: "Lenis Smooth Scroll", protocol: "Normalized Delta" },
-        { step: "02", label: "Camera Spline Rig", sublabel: "Catmull-Rom Interpolation", protocol: "Quaternion Math" },
-        { step: "03", label: "Inverted Sphere", sublabel: "Equirectangular Projection", protocol: "Three.js Mesh" },
-        { step: "04", label: "Texture Preloader", sublabel: "Mipmapped HDR Buffers", protocol: "Progressive Texture" },
-        { step: "05", label: "Adaptive PostFX", sublabel: "Bloom, Vignette, Grading", protocol: "Tiered by GPU" },
+        {
+          step: "01",
+          label: "Scroll Listener",
+          sublabel: "Lenis Virtual Scroll",
+          protocol: "Normalized Progress [0-1]",
+          description: "Captures butter-smooth scroll gestures and computes continuous interpolation target for the camera.",
+          payloadExample: 'lenis.on("scroll", ({ progress }) => setScrollProgress(progress))',
+          latencyOrSla: "60 FPS tick",
+        },
+        {
+          step: "02",
+          label: "Camera Rig",
+          sublabel: "Catmull-Rom Spline",
+          protocol: "Quaternion Slerp",
+          description: "Interpolates camera pitch, yaw, and field of view (FOV) smoothly along a choreographed path.",
+          payloadExample: 'camera.quaternion.slerp(targetQuaternion, 0.05)',
+          latencyOrSla: "16.6 ms",
+        },
+        {
+          step: "03",
+          label: "Inverted Sphere",
+          sublabel: "360° Panoramic Mapping",
+          protocol: "Three.js Mesh",
+          description: "Maps HDR panorama onto the inner surface of an inverted sphere (`scale.x = -1`), placing user at the center of the villa.",
+          payloadExample: '<mesh scale={[-1, 1, 1]}>\n  <sphereGeometry args={[500, 60, 40]} />\n  <meshBasicMaterial map={activeTexture} />\n</mesh>',
+          latencyOrSla: "Zero polygon cost",
+        },
+        {
+          step: "04",
+          label: "Texture Buffer",
+          sublabel: "Progressive Preloader",
+          protocol: "Mipmapped Buffers",
+          description: "Streams compressed WebP panoramas in advance of room transitions to prevent visible loading blanks.",
+          payloadExample: 'preloadRoomPanorama("ocean_suite_sunset.webp")',
+          latencyOrSla: "< 350 ms load",
+        },
+        {
+          step: "05",
+          label: "Adaptive PostFX",
+          sublabel: "Tiered by GPU Capability",
+          protocol: "Bloom & Color Grading",
+          description: "Enables warm architectural bloom and subtle chromatic aberration on high-end GPUs, falling back to clean unshaded view on mobile.",
+          payloadExample: 'if (gpuTier.isMobile) disableEffectPass("Bloom");',
+          latencyOrSla: "60 FPS maintained",
+        },
       ],
       keyMechanisms: [
         {
@@ -1023,7 +1512,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 12. ROUTENAVIGATOR ENGINE
   "traffic-navigation": {
     id: "traffic-navigation",
-    paperRef: "MIT-ALG-2025-RN12",
+    specId: "SYSTEMS-CPP // 12",
     title: "RouteNavigator Engine: Smart City Graph Pathfinding",
     subtitle: "Weighted Graph Network Modeling · Dijkstra & A* Heuristic Search in C++17 · Dynamic Congestion Routing",
     categoryBadge: "Systems Programming & Graph Algorithms (C++)",
@@ -1034,33 +1523,81 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#6366f1] via-[#7c3aed] to-[#8b5cf6]",
     aim: {
       statement:
-        "To build a high-performance urban route navigation engine in modern C++17 that models complex metropolitan road networks as weighted directed graphs and executes dynamic shortest and fastest path queries under real-time traffic congestion weights.",
+        "I engineered RouteNavigator Engine in modern C++17 to model metropolitan road networks as directed weighted graphs and calculate dynamic shortest and fastest routes under changing traffic congestion weights.",
       targetDomain: "Algorithmic Graph Theory, Systems Programming & Smart City Navigation",
       coreHypothesis:
-        "Implementing an A* heuristic search with Euclidean distance lower-bounds over adjacency lists outperforms standard Dijkstra by pruning unnecessary node explorations by up to 65%.",
+        "Implementing an A* heuristic search with Euclidean distance lower-bounds over contiguous `std::vector` adjacency lists outperforms unguided Dijkstra by pruning node exploration by up to 65%.",
     },
     problemStatement: {
       overview:
-        "Urban traffic networks consist of tens of thousands of intersections and one-way constraints. When accidents or peak-hour congestion alter road weights, naive shortest-path queries cause extreme computational latency, failing to deliver real-time rerouting for emergency and transit vehicles.",
+        "Metropolitan road graphs contain thousands of intersections. When unexpected traffic jams or road accidents occur, naive pathfinding algorithms re-examine millions of dead-end routes, taking hundreds of milliseconds and stalling emergency vehicle dispatch systems.",
       challenges: [
-        "Combinatorial Explosion: Dense road graphs contain millions of potential paths between distant urban zones.",
-        "Dynamic Edge Weighting: Real-time traffic events require updating edge costs without re-allocating the entire graph structure.",
-        "Memory Locality in C++: Cache misses during pointer-chasing graph traversal degrade CPU instruction pipeline performance.",
+        "Combinatorial Search Explosion: Dense road graphs contain millions of potential paths between distant zones.",
+        "Dynamic Weight Updates: Modulating edge travel costs in real time without reconstructing the whole graph.",
+        "CPU Cache Misses: Fragmented pointer-chasing graph nodes cause severe CPU memory pipeline stalls.",
       ],
       criticalFailureMode:
-        "Graph search timeout: Under large scale urban graphs (100k+ nodes), unpruned Dijkstra searches cause unacceptable latency (>500ms) for real-time dispatch systems.",
+        "Graph search timeout: In dense city graphs (100k+ nodes), unguided Dijkstra searches cause unacceptable latency (>500ms) for real-time dispatch systems.",
     },
     architecture: {
       summary:
         "Modern C++17 architecture utilizing adjacency lists with `std::vector`, `std::priority_queue` (min-heap), and A* Euclidean heuristic evaluation.",
       diagramType: "Graph Traversal & Heuristic Search Architecture",
       pipeline: [
-        { step: "01", label: "Road Network Ingress", sublabel: "Nodes (Intersections) & Edges", protocol: "CSV / Map Parser" },
-        { step: "02", label: "Adjacency List Build", sublabel: "Contiguous Memory Vectors", protocol: "std::vector<Edge>" },
-        { step: "03", label: "Dynamic Congestion Hook", sublabel: "Weight Multipliers (1.0x - 5.0x)", protocol: "Real-Time Update" },
-        { step: "04", label: "Priority Queue (Min-Heap)", sublabel: "Node Expansion Ordering", protocol: "std::priority_queue" },
-        { step: "05", label: "A* Heuristic Evaluator", sublabel: "f(n) = g(n) + h(n)", protocol: "Euclidean Metric" },
-        { step: "06", label: "Path Reconstruction", sublabel: "Optimal Route Vector", protocol: "Backtracking Vector" },
+        {
+          step: "01",
+          label: "Graph Ingress",
+          sublabel: "Intersections & Edges",
+          protocol: "C++ File Stream",
+          description: "Parses road network coordinates and edge lengths from structured CSV/JSON map datasets.",
+          payloadExample: 'Node: id=140, lat=23.2599, lon=77.4126\nEdge: from=140, to=141, dist=450m, baseSpeed=50km/h',
+          latencyOrSla: "< 15 ms parse",
+        },
+        {
+          step: "02",
+          label: "Adjacency Buffer",
+          sublabel: "Contiguous Memory Vector",
+          protocol: "std::vector<Edge>",
+          description: "Stores outgoing edges in contiguous memory to minimize CPU L1/L2 data cache misses during traversal.",
+          payloadExample: 'struct Edge { int toNode; double weight; double dynamicCongestion; };\nstd::vector<std::vector<Edge>> adjList;',
+          latencyOrSla: "High cache hit rate",
+        },
+        {
+          step: "03",
+          label: "Congestion Hook",
+          sublabel: "Dynamic Edge Weighting",
+          protocol: "Multiplier [1.0x - 5.0x]",
+          description: "Applies real-time traffic multiplier to edge weights: `effectiveWeight = distance / (speed * congestion)`.",
+          payloadExample: 'edge.dynamicWeight = edge.distance / (edge.speedLimit * trafficFactor);',
+          latencyOrSla: "O(1) update",
+        },
+        {
+          step: "04",
+          label: "Min-Heap Queue",
+          sublabel: "Priority Queue",
+          protocol: "std::priority_queue",
+          description: "Maintains frontier nodes sorted by lowest calculated evaluation cost `f(n) = g(n) + h(n)`.",
+          payloadExample: 'std::priority_queue<NodeCost, std::vector<NodeCost>, std::greater<NodeCost>> pq;',
+          latencyOrSla: "O(log V) push/pop",
+        },
+        {
+          step: "05",
+          label: "A* Evaluation",
+          sublabel: "Euclidean Heuristic",
+          protocol: "Admissible Metric",
+          description: "Prunes search by estimating remaining distance straight to the target using Euclidean geometry.",
+          payloadExample: 'double h = std::hypot(target.x - current.x, target.y - current.y) / maxSpeed;',
+          latencyOrSla: "O(1) calculation",
+        },
+        {
+          step: "06",
+          label: "Path Output",
+          sublabel: "Backtracking Vector",
+          protocol: "std::vector<int>",
+          description: "Reconstructs the optimal intersection-by-intersection route and estimated arrival time.",
+          payloadExample: 'Route: [140 → 145 → 189 → 210]\nTotal Distance: 4.2 km · ETA: 6.8 mins',
+          latencyOrSla: "< 5 ms execution",
+        },
       ],
       keyMechanisms: [
         {
@@ -1107,7 +1644,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   // 13. STOCKSENTINEL
   stocksentinel: {
     id: "stocksentinel",
-    paperRef: "MIT-ALG-2025-SS13",
+    specId: "SYSTEMS-CPP // 13",
     title: "StockSentinel: Smart Warehouse Inventory & Batch Router",
     subtitle: "Logarithmic O(log N) std::map Indexing · FIFO/LIFO Batch Processing · Modern C++17 Engine",
     categoryBadge: "Systems Programming & Data Structures (C++)",
@@ -1118,14 +1655,14 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     gradient: "from-[#059669] via-[#0d9488] to-[#14b8a6]",
     aim: {
       statement:
-        "To engineer a production-grade warehouse inventory engine in modern C++17 that models goods through dual dispatch strategies: First-In-First-Out (FIFO) for perishable supplies and Last-In-First-Out (LIFO) for non-perishable hardware, with persistent CSV transaction journals.",
+        "I built StockSentinel in C++17 to model intelligent warehouse operations: automatically enforcing First-In-First-Out (FIFO) batch routing for perishable supplies and Last-In-First-Out (LIFO) for stackable hardware, backed by persistent CSV journals.",
       targetDomain: "Automated Warehousing, Systems Programming & Algorithmic Inventory",
       coreHypothesis:
         "Utilizing `std::map` (Red-Black Trees) for SKU indexing combined with `std::deque` for batch queues achieves logarithmic product lookups and constant O(1) batch additions and dispatches.",
     },
     problemStatement: {
       overview:
-        "Warehouses managing both perishable items (medicines, foods) and durable hardware suffer from inventory spoilage and batch tracking errors when using unified queue systems. Naive linear array lookups degrade exponentially as inventory sizes reach hundreds of thousands of SKUs.",
+        "Warehouses storing both perishable items (medicines, dairy) and durable hardware suffer from spoilage when using generic dispatch queues. Naive linear array lookups degrade exponentially as inventory sizes reach hundreds of thousands of SKUs.",
       challenges: [
         "Perishable Spoilage: Dispensing older inventory after newer arrivals leads to shelf-life expiration waste.",
         "Algorithmic Search Degradation: Linear O(N) SKU searches in large databases slow down high-speed barcode checkout scanners.",
@@ -1139,12 +1676,51 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
         "C++17 engine coupling `std::map` balanced Red-Black Trees with double-ended queue `std::deque` buffers and atomic file persistence handlers.",
       diagramType: "Dual FIFO/LIFO Dispatch & Red-Black Tree Architecture",
       pipeline: [
-        { step: "01", label: "Stock Batch Ingress", sublabel: "SKU, Quantity, Expiry", protocol: "Console / Batch Stream" },
-        { step: "02", label: "Red-Black Tree Index", sublabel: "std::map<string, Item>", protocol: "O(log N) Lookup" },
-        { step: "03", label: "Strategy Router", sublabel: "FIFO vs LIFO Decision", protocol: "Category Rule Check" },
-        { step: "04", label: "Batch Queue", sublabel: "std::deque<Batch>", protocol: "O(1) Pop Front / Back" },
-        { step: "05", label: "Order Dispatch", sublabel: "Deduction & Validation", protocol: "Stock Verification" },
-        { step: "06", label: "CSV Journal Sync", sublabel: "Persistent Audit Trail", protocol: "File I/O Stream" },
+        {
+          step: "01",
+          label: "Batch Ingress",
+          sublabel: "SKU, Quantity, Expiry",
+          protocol: "C++ I/O Stream",
+          description: "Incoming shipment scan carrying product SKU, quantity, category, and batch timestamp.",
+          payloadExample: 'Batch: SKU="MED_AMOX_500", Qty=1000, Category=PERISHABLE, Expiry=2027-03-01',
+          latencyOrSla: "Microsecond",
+        },
+        {
+          step: "02",
+          label: "Red-Black Tree",
+          sublabel: "std::map<string, Item>",
+          protocol: "O(log N) Lookup",
+          description: "Indexes product in self-balancing binary search tree in logarithmic time.",
+          payloadExample: 'auto it = inventoryMap.find("MED_AMOX_500"); // Guaranteed O(log N) lookup',
+          latencyOrSla: "0.2 μs",
+        },
+        {
+          step: "03",
+          label: "Strategy Router",
+          sublabel: "FIFO vs LIFO Decision",
+          protocol: "Category Policy Check",
+          description: "Routes perishables to FIFO queue and durable construction hardware to LIFO queue.",
+          payloadExample: 'if (item.category == PERISHABLE) queueStrategy = FIFO;\nelse queueStrategy = LIFO;',
+          latencyOrSla: "Instant",
+        },
+        {
+          step: "04",
+          label: "Deque Buffer",
+          sublabel: "std::deque<Batch>",
+          protocol: "O(1) Pop Front/Back",
+          description: "Pops from `deque::pop_front()` for FIFO or `deque::pop_back()` for LIFO in constant time.",
+          payloadExample: 'Batch dispatched = item.batches.front();\nitem.batches.pop_front(); // FIFO dispatch',
+          latencyOrSla: "O(1) constant",
+        },
+        {
+          step: "05",
+          label: "CSV Journal Sync",
+          sublabel: "Persistent Ledger",
+          protocol: "std::ofstream",
+          description: "Appends transaction record to CSV ledger file to guarantee state recovery across reboots.",
+          payloadExample: 'journalFile << timestamp << "," << sku << "," << -qty << "," << "DISPATCH_FIFO\\n";',
+          latencyOrSla: "Buffered I/O",
+        },
       ],
       keyMechanisms: [
         {
