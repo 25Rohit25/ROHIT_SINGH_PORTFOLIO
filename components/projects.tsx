@@ -101,12 +101,29 @@ const projects: ProjectItem[] = [
     gradient: "from-[#c026d3] via-[#db2777] to-[#f43f5e]",
     accentColor: "#db2777",
   },
+  {
+    id: "bhopal-food",
+    category: "fullstack",
+    number: "04",
+    badge: "Full-Stack MERN",
+    title: "Bhopal Food Choice",
+    subtitle: "Train seat catering delivery · Real-time collaborative group ordering",
+    description:
+      "Full-stack MERN train catering application allowing passengers to order authentic regional cuisine directly to their berth via PNR and Seat Number, with real-time multi-user group cart collaboration.",
+    metrics: "PNR Seat Routing · Socket Group Cart · Live Tracking",
+    stack: ["React", "Vite", "Node.js", "Express", "Socket.io", "MongoDB Atlas", "Tailwind"],
+    github: "https://github.com/25Rohit25/Bhopal-Food",
+    live: "https://bhopal-food.vercel.app/",
+    thumbnail: "/projects/bhopal-food-hero.png",
+    gradient: "from-[#db2777] via-[#ec4899] to-[#f472b6]",
+    accentColor: "#db2777",
+  },
 
   // 2. AI & COMPUTER VISION
   {
     id: "retail-lens",
     category: "ai",
-    number: "04",
+    number: "05",
     badge: "AI & Computer Vision",
     title: "Retail_Lens",
     subtitle: "AI-Powered CCTV intelligence · YOLOv8 Nano · Edge shopper tracking",
@@ -121,7 +138,7 @@ const projects: ProjectItem[] = [
   {
     id: "nexabank",
     category: "ai",
-    number: "05",
+    number: "06",
     badge: "AI & Agent Systems",
     title: "Nexa Bank",
     subtitle: "AI-Native Banking with MCP · Policy-grounded RAG compliance",
@@ -143,7 +160,7 @@ const projects: ProjectItem[] = [
   {
     id: "waste-no-more",
     category: "fullstack",
-    number: "06",
+    number: "07",
     badge: "Full-Stack & Logistics",
     title: "Waste No More",
     subtitle: "Real-time logistics platform · 32% efficiency boost · WebSocket sub-200ms",
@@ -155,23 +172,6 @@ const projects: ProjectItem[] = [
     live: "https://waste-no-more.vercel.app/",
     gradient: "from-[#059669] via-[#10b981] to-[#34d399]",
     accentColor: "#059669",
-  },
-  {
-    id: "bhopal-food",
-    category: "fullstack",
-    number: "07",
-    badge: "Full-Stack MERN",
-    title: "Bhopal Food Choice",
-    subtitle: "Train seat catering delivery · Real-time collaborative group ordering",
-    description:
-      "Full-stack MERN train catering application allowing passengers to order authentic regional cuisine directly to their berth via PNR and Seat Number, with real-time multi-user group cart collaboration.",
-    metrics: "PNR Seat Routing · Socket Group Cart · Live Tracking",
-    stack: ["React", "Vite", "Node.js", "Express", "Socket.io", "MongoDB Atlas", "Tailwind"],
-    github: "https://github.com/25Rohit25/Bhopal-Food",
-    live: "https://bhopal-food.vercel.app/",
-    thumbnail: "/projects/bhopal-food-hero.png",
-    gradient: "from-[#db2777] via-[#ec4899] to-[#f472b6]",
-    accentColor: "#db2777",
   },
   {
     id: "fitlife",
@@ -368,18 +368,18 @@ export default function Projects() {
                 <div>
                   {/* Top Colorful Header Banner or Real UI Screenshot Thumbnail */}
                   <div
-                    className={`relative h-44 w-full overflow-hidden bg-gradient-to-br ${proj.gradient} flex flex-col justify-between sm:h-52`}
+                    className={`relative h-48 w-full overflow-hidden bg-gradient-to-br ${proj.gradient} flex flex-col justify-between sm:h-56`}
                   >
                     {proj.thumbnail ? (
-                      <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
+                      <div className="absolute inset-0 z-0 overflow-hidden bg-slate-900">
                         {/* Thumbnail Image with smooth zoom on hover */}
                         <img
                           src={proj.thumbnail}
                           alt={`${proj.title} Preview`}
-                          className="h-full w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-105 group-hover:opacity-95 opacity-90"
+                          className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105"
                         />
-                        {/* Gradient vignette to guarantee top badge & watermark legibility */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/50" />
+                        {/* Subtle top & bottom vignette that preserves light UI clarity */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/25 pointer-events-none" />
                       </div>
                     ) : (
                       <>
@@ -396,7 +396,7 @@ export default function Projects() {
 
                     {/* Top Pill & Badges */}
                     <div className="relative z-10 flex items-center justify-between p-5 sm:p-6">
-                      <span className="rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md border border-white/10 shadow-xs">
+                      <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md border border-white/20 shadow-xs">
                         {proj.badge}
                       </span>
 
@@ -406,7 +406,7 @@ export default function Projects() {
                             href={proj.live}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all hover:scale-105 hover:bg-white hover:text-slate-900 shadow-xs"
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md border border-white/20 transition-all hover:scale-105 hover:bg-white hover:text-slate-900 shadow-xs"
                             title="Live Demo"
                           >
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -418,7 +418,7 @@ export default function Projects() {
                           href={proj.github}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all hover:scale-105 hover:bg-white hover:text-slate-900 shadow-xs"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md border border-white/20 transition-all hover:scale-105 hover:bg-white hover:text-slate-900 shadow-xs"
                           title="GitHub Repository"
                         >
                           <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -431,12 +431,12 @@ export default function Projects() {
                     {/* Footer within banner: Indicator & Watermark Number */}
                     <div className="relative z-10 flex items-end justify-between px-5 pb-4 sm:px-6 sm:pb-5">
                       {proj.thumbnail && (
-                        <span className="inline-flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-0.5 font-mono text-[9px] font-semibold text-emerald-400 backdrop-blur-md border border-emerald-500/30">
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-0.5 font-mono text-[9px] font-semibold text-emerald-400 backdrop-blur-md border border-emerald-500/30">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>DASHBOARD UI</span>
+                          <span>LIVE UI</span>
                         </span>
                       )}
-                      <span className="font-mono text-4xl sm:text-5xl font-black tracking-tighter text-white/30 select-none ml-auto">
+                      <span className={`font-mono text-4xl sm:text-5xl font-black tracking-tighter select-none ml-auto ${proj.thumbnail ? "text-white/40 drop-shadow-md" : "text-white/30"}`}>
                         {proj.number}
                       </span>
                     </div>

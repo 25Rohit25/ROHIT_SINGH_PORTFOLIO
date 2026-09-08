@@ -334,11 +334,11 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               </div>
 
               {/* Full Resolution Screenshot Image */}
-              <div className="relative overflow-hidden bg-slate-900 max-h-[460px]">
+              <div className="relative overflow-hidden bg-slate-950 max-h-[580px]">
                 <img
                   src={project.thumbnail}
                   alt={`${project.title} Interface`}
-                  className="w-full h-auto object-cover object-top"
+                  className="w-full h-auto object-cover object-center"
                   loading="eager"
                 />
               </div>
