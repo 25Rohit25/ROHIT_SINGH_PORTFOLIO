@@ -30,6 +30,7 @@ export interface ProjectWhitepaper {
   status: string;
   githubUrl: string;
   liveUrl?: string;
+  thumbnail?: string;
   accentColor: string;
   gradient: string;
 
@@ -122,6 +123,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     authorship: "Rohit Singh · Handshake AI / KL University",
     status: "Production Benchmarked",
     githubUrl: "https://github.com/25Rohit25/Payflow",
+    thumbnail: "/projects/payflow-dashboard.png",
     accentColor: "#ea580c",
     gradient: "from-[#ea580c] via-[#f97316] to-[#fb923c]",
 

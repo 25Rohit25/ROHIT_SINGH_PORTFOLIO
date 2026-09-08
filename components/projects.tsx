@@ -19,6 +19,7 @@ interface ProjectItem {
   stack: string[];
   github: string;
   live?: string;
+  thumbnail?: string;
   gradient: string;
   accentColor: string;
   flow?: string[];
@@ -50,6 +51,7 @@ const projects: ProjectItem[] = [
     metrics: "450 TPS · <85ms Kafka Outbox · 0 Loss",
     stack: ["Java 21", "Spring Boot", "PostgreSQL", "Redis", "Kafka", "Docker", "K6"],
     github: "https://github.com/25Rohit25/Payflow",
+    thumbnail: "/projects/payflow-dashboard.png",
     gradient: "from-[#ea580c] via-[#f97316] to-[#fb923c]",
     accentColor: "#ea580c",
     caseStudy: {
@@ -361,22 +363,37 @@ export default function Projects() {
                 className="group flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)]"
               >
                 <div>
-                  {/* Top Colorful Header Banner with Dot Grid & Large Watermark Number (Matching Reference) */}
+                  {/* Top Colorful Header Banner or Real UI Screenshot Thumbnail */}
                   <div
-                    className={`relative h-36 w-full overflow-hidden bg-gradient-to-br ${proj.gradient} p-5 flex flex-col justify-between sm:h-44 sm:p-6`}
+                    className={`relative h-44 w-full overflow-hidden bg-gradient-to-br ${proj.gradient} flex flex-col justify-between sm:h-52`}
                   >
-                    {/* Dot Pattern Overlay */}
-                    <div
-                      className="absolute inset-0 opacity-15"
-                      style={{
-                        backgroundImage: `radial-gradient(#fff 1.5px, transparent 1.5px)`,
-                        backgroundSize: "14px 14px",
-                      }}
-                    />
+                    {proj.thumbnail ? (
+                      <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
+                        {/* Thumbnail Image with smooth zoom on hover */}
+                        <img
+                          src={proj.thumbnail}
+                          alt={`${proj.title} Preview`}
+                          className="h-full w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-105 group-hover:opacity-95 opacity-90"
+                        />
+                        {/* Gradient vignette to guarantee top badge & watermark legibility */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/50" />
+                      </div>
+                    ) : (
+                      <>
+                        {/* Dot Pattern Overlay */}
+                        <div
+                          className="absolute inset-0 opacity-15"
+                          style={{
+                            backgroundImage: `radial-gradient(#fff 1.5px, transparent 1.5px)`,
+                            backgroundSize: "14px 14px",
+                          }}
+                        />
+                      </>
+                    )}
 
                     {/* Top Pill & Badges */}
-                    <div className="relative z-10 flex items-center justify-between">
-                      <span className="rounded-full bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
+                    <div className="relative z-10 flex items-center justify-between p-5 sm:p-6">
+                      <span className="rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md border border-white/10 shadow-xs">
                         {proj.badge}
                       </span>
 
@@ -386,7 +403,7 @@ export default function Projects() {
                             href={proj.live}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all hover:scale-105 hover:bg-white hover:text-slate-900"
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all hover:scale-105 hover:bg-white hover:text-slate-900 shadow-xs"
                             title="Live Demo"
                           >
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -398,7 +415,7 @@ export default function Projects() {
                           href={proj.github}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all hover:scale-105 hover:bg-white hover:text-slate-900"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all hover:scale-105 hover:bg-white hover:text-slate-900 shadow-xs"
                           title="GitHub Repository"
                         >
                           <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -408,9 +425,15 @@ export default function Projects() {
                       </div>
                     </div>
 
-                    {/* Giant Watermark Number (Matching Reference Image) */}
-                    <div className="relative z-10 flex items-end justify-end">
-                      <span className="font-mono text-5xl font-black tracking-tighter text-white/30 select-none">
+                    {/* Footer within banner: Indicator & Watermark Number */}
+                    <div className="relative z-10 flex items-end justify-between px-5 pb-4 sm:px-6 sm:pb-5">
+                      {proj.thumbnail && (
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-0.5 font-mono text-[9px] font-semibold text-emerald-400 backdrop-blur-md border border-emerald-500/30">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>DASHBOARD UI</span>
+                        </span>
+                      )}
+                      <span className="font-mono text-4xl sm:text-5xl font-black tracking-tighter text-white/30 select-none ml-auto">
                         {proj.number}
                       </span>
                     </div>

@@ -264,6 +264,38 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             </div>
           </div>
 
+          {/* Project Dashboard UI Preview Frame (If available) */}
+          {project.thumbnail && (
+            <div className="mt-8 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xs">
+              {/* Browser Window Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-4 py-3 sm:px-6">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-[#ff5f56]" />
+                  <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
+                  <span className="h-3 w-3 rounded-full bg-[#27c93f]" />
+                  <span className="ml-2 font-mono text-[11px] text-slate-400 hidden sm:inline-block">
+                    payflow.app // dashboard
+                  </span>
+                </div>
+                <div className="rounded-md bg-slate-200/60 px-3 py-1 font-mono text-[10px] text-slate-600 truncate max-w-xs sm:max-w-md">
+                  https://payflow.rohit.engineering/dashboard
+                </div>
+                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 font-mono text-[9px] font-semibold text-emerald-800">
+                  ● LIVE UI
+                </span>
+              </div>
+
+              {/* Full Resolution Screenshot Image */}
+              <div className="relative overflow-hidden bg-slate-900">
+                <img
+                  src={project.thumbnail}
+                  alt={`${project.title} Interface`}
+                  className="w-full h-auto object-cover object-top"
+                />
+              </div>
+            </div>
+          )}
+
           {/* LAYER 1: RECRUITER 30-SECOND VIEW */}
           {audienceLayer === "recruiter" && (
             <div className="mt-8 space-y-6">
