@@ -11,8 +11,9 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "YOUR BRAND — Motion in progress",
-  description: "A cinematic scroll-scrubbed video experience.",
+  title: "Rohit Singh — Software Engineer | Distributed Systems · Backend · AI Agents",
+  description:
+    "Portfolio of Rohit Singh. Software Engineering Contractor at Handshake AI, Distributed Systems Engineer, LeetCode Knight (2008), and Backend Developer specializing in Java, Spring Boot, Kafka, and AI Agent evaluation.",
 };
 
 export default function RootLayout({

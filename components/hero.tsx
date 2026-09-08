@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import silverSkinImage from "../silver-skin-hero-img.png";
 import InkReveal from "./ui/ink-reveal";
 
-const FRAME_COUNT = 303;
+const FRAME_COUNT = 240;
 const FRAME_FOLDER = "/hero/frames";
 const BEAT_COUNT = 3;
 
@@ -23,25 +23,28 @@ const beatTransform = (offset: number) =>
 
 const beats = [
   {
-    eyebrow: "MOTION STUDY",
-    firstLine: "Something worth",
-    secondLine: "watching, in",
-    thirdLine: "motion.",
-    copy: "A quiet sequence with enough room for the eye to catch up.",
+    eyebrow: "HELLO, I'M",
+    firstLine: "Rohit Singh.",
+    secondLine: "Software",
+    thirdLine: "Engineer.",
+    copy: "B.Tech CS at KL University with a 9.40 CGPA. I build backend systems, distributed infrastructure, and AI-agent tooling — currently at Handshake AI.",
+    hasCtas: true,
   },
   {
-    eyebrow: "SCROLL LOGIC",
-    firstLine: "Smooth scroll.",
-    secondLine: "Scrubbed video.",
-    thirdLine: "Pinned reveals.",
-    copy: "Every gesture becomes a cut, and every pause keeps its frame.",
+    eyebrow: "WHAT I BUILD",
+    firstLine: "Backend systems",
+    secondLine: "that perform",
+    thirdLine: "under pressure.",
+    copy: "From payment ledgers processing 450 TPS to real-time WebSocket platforms — I design services that are concurrent, fault-tolerant, and production-ready.",
+    hasCtas: false,
   },
   {
-    eyebrow: "BUILT TO STAY",
-    firstLine: "Built to",
-    secondLine: "make people",
-    thirdLine: "stay.",
-    copy: "A slower visual rhythm for ideas that deserve another look.",
+    eyebrow: "CURRENTLY",
+    firstLine: "Handshake AI.",
+    secondLine: "Evaluating",
+    thirdLine: "coding agents.",
+    copy: "Building rigorous evaluation environments, automated verifiers, and reproducible test sandboxes to benchmark how well AI agents write real software.",
+    hasCtas: false,
   },
 ];
 
@@ -64,38 +67,88 @@ function ArrowIcon() {
 }
 
 function Header() {
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const heroEl = document.getElementById("hero");
+      if (heroEl) {
+        const rect = heroEl.getBoundingClientRect();
+        setScrolledPastHero(rect.bottom <= 120);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between px-5 py-5 text-[10px] uppercase tracking-[0.22em] text-white sm:px-7 sm:py-7 lg:px-10">
+    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between px-5 py-5 text-[10px] uppercase tracking-[0.22em] transition-colors duration-300 sm:px-7 sm:py-7 lg:px-10">
       <a
         className="pointer-events-auto group flex flex-col gap-1 leading-none"
         href="#hero"
       >
-        <span className="font-semibold text-[13px] tracking-[-0.03em] text-[#f4f1eb] sm:text-sm">
-          YOUR BRAND
+        <span
+          className={`font-semibold text-[13px] tracking-[-0.03em] transition-colors duration-300 sm:text-sm ${
+            scrolledPastHero ? "text-slate-900" : "text-[#f4f1eb]"
+          }`}
+        >
+          ROHIT SINGH
         </span>
-        <span className="text-[8px] tracking-[0.34em] text-white/50 transition-colors group-hover:text-white/80">
-          THREE WORDS HERE
+        <span
+          className={`text-[8px] tracking-[0.32em] transition-colors duration-300 ${
+            scrolledPastHero ? "text-slate-500 group-hover:text-slate-900" : "text-white/50 group-hover:text-white/80"
+          }`}
+        >
+          SOFTWARE ENGINEER
         </span>
       </a>
 
-      <nav className="pointer-events-auto absolute left-1/2 top-5 hidden -translate-x-1/2 items-center gap-0.5 rounded-full border border-white/20 bg-black/30 p-1.5 backdrop-blur-md md:flex md:top-7">
-        {["Home", "About", "Contact"].map((item, index) => (
+      <nav
+        className={`pointer-events-auto absolute left-1/2 top-5 hidden -translate-x-1/2 items-center gap-1 rounded-full p-1.5 backdrop-blur-xl transition-all duration-300 md:flex md:top-7 ${
+          scrolledPastHero
+            ? "border border-slate-200/90 bg-white/90 shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
+            : "border border-white/15 bg-black/60 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+        }`}
+      >
+        {[
+          { label: "Experience", href: "#experience", external: false },
+          { label: "Projects", href: "#projects", external: false },
+          { label: "Skills", href: "#skills", external: false },
+          { label: "Achievements", href: "#achievements", external: false },
+          { label: "Certifications", href: "#certifications", external: false },
+          { label: "Resume ↗", href: "/Rohit_Singh_Resume.pdf", external: true },
+          { label: "Contact", href: "#contact", external: false },
+        ].map((item) => (
           <a
-            className="rounded-full px-4 py-2 text-[9px] tracking-[0.2em] text-white/55 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white"
-            href={index === 0 ? "#hero" : index === 1 ? "#about" : "#contact"}
-            key={item}
+            className={`rounded-full px-3 py-1.5 text-[9px] tracking-[0.16em] font-medium transition-colors focus-visible:outline-none ${
+              scrolledPastHero
+                ? "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                : "text-white/70 hover:bg-white/10 hover:text-white"
+            }`}
+            href={item.href}
+            key={item.label}
+            {...(item.external ? { target: "_blank", rel: "noreferrer" } : {})}
           >
-            {item}
+            {item.label}
           </a>
         ))}
       </nav>
 
       <a
-        className="pointer-events-auto group flex items-center gap-2 rounded-full bg-[#f4f1eb] py-1.5 pl-4 pr-1.5 text-[9px] font-semibold tracking-[0.18em] text-black transition-transform hover:translate-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:py-2 sm:pl-5 sm:pr-2"
-        href="#explore"
+        className={`pointer-events-auto group flex items-center gap-2 rounded-full py-1.5 pl-4 pr-1.5 text-[9px] font-semibold tracking-[0.18em] transition-all sm:py-2 sm:pl-5 sm:pr-2 ${
+          scrolledPastHero
+            ? "bg-slate-900 text-white hover:bg-black shadow-[0_4px_16px_rgba(15,23,42,0.15)]"
+            : "bg-[#f4f1eb] text-black hover:bg-white hover:shadow-[0_0_20px_rgba(244,241,235,0.3)]"
+        }`}
+        href="#contact"
       >
-        <span>Let&apos;s talk</span>
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-[#f4f1eb] transition-transform duration-300 group-hover:translate-x-0.5 sm:h-7 sm:w-7">
+        <span>Get in Touch</span>
+        <span
+          className={`flex h-6 w-6 items-center justify-center rounded-full transition-transform duration-300 group-hover:translate-x-0.5 sm:h-7 sm:w-7 ${
+            scrolledPastHero ? "bg-white text-slate-900" : "bg-black text-[#f4f1eb]"
+          }`}
+        >
           <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 16 16">
             <path
               d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"
@@ -143,29 +196,66 @@ function TextDrum({
     <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
       {beats.map((beat, index) => (
         <div
-          className="hero-beat absolute left-[clamp(1.25rem,7vw,7.5rem)] top-1/2 w-[min(44rem,calc(100vw-2.5rem))] -translate-y-1/2"
+          className="hero-beat absolute left-[clamp(1rem,5vw,7.5rem)] top-1/2 w-[min(46rem,calc(100vw-2rem))] -translate-y-1/2"
           key={beat.eyebrow}
           ref={(element) => {
             beatRefs.current[index] = element;
           }}
           style={{ transform: beatTransform(index) }}
         >
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/25 px-3 py-1.5 text-[9px] font-semibold tracking-[0.28em] text-white/75 backdrop-blur-md sm:mb-6">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#ff6b51] shadow-[0_0_14px_rgba(255,107,81,0.8)]" />
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1.5 text-[9px] font-semibold tracking-[0.24em] text-white/80 backdrop-blur-md sm:mb-5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#ff6b51] shadow-[0_0_12px_rgba(255,107,81,0.8)]" />
             {beat.eyebrow}
           </div>
+
           <h1
-            className="text-[clamp(3.25rem,7vw,7rem)] font-semibold leading-[0.9] tracking-[-0.065em] text-[#f4f1eb]"
+            className="text-[clamp(2rem,6vw,6rem)] font-semibold leading-[0.92] tracking-[-0.04em] text-[#f4f1eb]"
           >
             <span className="block">{beat.firstLine}</span>
             <span className="block">{beat.secondLine}</span>
-            <span className="font-serif font-normal italic tracking-[-0.075em] text-[#f4f1eb]">
+            <span className="font-serif font-normal italic tracking-[-0.065em] text-[#f4f1eb]">
               {beat.thirdLine}
             </span>
           </h1>
-          <p className="mt-6 max-w-md text-sm leading-6 text-white/70 sm:mt-7 sm:text-[15px] sm:leading-7">
+
+          <p className="mt-4 max-w-lg text-xs leading-relaxed text-white/70 sm:mt-6 sm:text-sm md:text-[15px]">
             {beat.copy}
           </p>
+
+          {beat.hasCtas && (
+            <div className="mt-5 flex flex-col gap-3 sm:mt-7 sm:gap-4">
+              {/* Action CTAs */}
+              <div className="pointer-events-auto flex flex-wrap items-center gap-2">
+                <a
+                  href="#projects"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#f4f1eb] px-4 py-2 text-[11px] font-semibold tracking-[0.14em] text-black transition-all hover:bg-white hover:shadow-[0_0_20px_rgba(244,241,235,0.25)] sm:px-5 sm:py-2.5 sm:text-xs"
+                >
+                  <span>View Projects</span>
+                  <span className="text-xs">↓</span>
+                </a>
+
+                <a
+                  href="/Rohit_Singh_Resume.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-2 text-[11px] font-medium tracking-wider text-white transition-colors hover:border-white/40 hover:bg-white/10 sm:px-4 sm:py-2.5 sm:text-xs"
+                >
+                  <span>Resume</span>
+                  <span className="text-[10px]">↗</span>
+                </a>
+
+                <a
+                  href="https://github.com/25Rohit25"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-2 text-[11px] font-medium tracking-wider text-white transition-colors hover:border-white/40 hover:bg-white/10 sm:px-4 sm:py-2.5 sm:text-xs"
+                >
+                  <span>GitHub</span>
+                  <span className="text-[10px]">↗</span>
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -174,17 +264,21 @@ function TextDrum({
 
 function MetaRail() {
   return (
-    <aside className="pointer-events-none absolute inset-y-0 right-7 z-30 hidden w-40 flex-col justify-between py-9 text-right text-[9px] uppercase tracking-[0.26em] text-white/55 lg:flex xl:right-10">
+    <aside className="pointer-events-none absolute inset-y-0 right-7 z-30 hidden w-44 flex-col justify-between py-9 text-right text-[9px] uppercase tracking-[0.24em] text-white/55 lg:flex xl:right-10">
       <div aria-hidden="true" className="h-0" />
 
-      <div className="space-y-5">
+      <div className="space-y-4">
         <div>
-          <p className="mb-1 text-white/35">Currently</p>
-          <p className="text-white/75">A moving still</p>
+          <p className="mb-0.5 text-white/35">Role</p>
+          <p className="text-white/90 font-medium">Handshake AI · SWE</p>
         </div>
         <div>
-          <p className="mb-1 text-white/35">This week</p>
-          <p className="text-white/75">Slow cinema</p>
+          <p className="mb-0.5 text-white/35">Education</p>
+          <p className="text-white/90 font-medium">KL Univ · 9.40 CGPA</p>
+        </div>
+        <div>
+          <p className="mb-0.5 text-white/35">Competitive</p>
+          <p className="text-white/90 font-medium">LeetCode 2008 · CodeChef 2038</p>
         </div>
       </div>
 
