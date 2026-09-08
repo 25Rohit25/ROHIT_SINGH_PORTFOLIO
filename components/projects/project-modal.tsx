@@ -316,6 +316,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                       ? "chat.app // full-duplex-socket"
                       : project.id === "bhopal-food"
                       ? "bhopalfood.com // train-catering"
+                      : project.id === "waste-no-more"
+                      ? "wastenomore.org // food-rescue"
                       : `${project.id}.app // dashboard`}
                   </span>
                 </div>
@@ -326,6 +328,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     ? "http://localhost:3000 (Real-Time Chat | #general)"
                     : project.id === "bhopal-food"
                     ? "https://bhopal-food.vercel.app (Bhopal Food Choice)"
+                    : project.id === "waste-no-more"
+                    ? "https://waste-no-more.vercel.app (Waste No More)"
                     : `https://${project.id}.rohit.engineering/dashboard`}
                 </div>
                 <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 font-mono text-[9px] font-semibold text-emerald-800">

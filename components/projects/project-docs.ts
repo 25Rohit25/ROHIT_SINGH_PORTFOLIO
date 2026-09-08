@@ -1034,6 +1034,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     status: "Production Deployed (Vercel & Render)",
     githubUrl: "https://github.com/25Rohit25/Waste-No-More",
     liveUrl: "https://waste-no-more.vercel.app/",
+    thumbnail: "/projects/waste-no-more-hero.png",
     accentColor: "#059669",
     gradient: "from-[#059669] via-[#10b981] to-[#34d399]",
     aim: {

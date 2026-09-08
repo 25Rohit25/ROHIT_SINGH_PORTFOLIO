@@ -118,12 +118,29 @@ const projects: ProjectItem[] = [
     gradient: "from-[#db2777] via-[#ec4899] to-[#f472b6]",
     accentColor: "#db2777",
   },
+  {
+    id: "waste-no-more",
+    category: "fullstack",
+    number: "05",
+    badge: "Full-Stack & Logistics",
+    title: "Waste No More",
+    subtitle: "Real-time logistics platform · 32% efficiency boost · WebSocket sub-200ms",
+    description:
+      "Hyper-local on-demand logistics platform connecting perishable food donors with nearby volunteers using MongoDB 2dsphere spatial indexing ($near queries) and Socket.io real-time concurrency locking.",
+    metrics: "2dsphere $near · Socket.io Sync · Next.js 16",
+    stack: ["Next.js 16", "React 19", "Node.js", "Express 5", "MongoDB", "Socket.io", "Tailwind"],
+    github: "https://github.com/25Rohit25/Waste-No-More",
+    live: "https://waste-no-more.vercel.app/",
+    thumbnail: "/projects/waste-no-more-hero.png",
+    gradient: "from-[#059669] via-[#10b981] to-[#34d399]",
+    accentColor: "#059669",
+  },
 
   // 2. AI & COMPUTER VISION
   {
     id: "retail-lens",
     category: "ai",
-    number: "05",
+    number: "06",
     badge: "AI & Computer Vision",
     title: "Retail_Lens",
     subtitle: "AI-Powered CCTV intelligence · YOLOv8 Nano · Edge shopper tracking",
@@ -138,7 +155,7 @@ const projects: ProjectItem[] = [
   {
     id: "nexabank",
     category: "ai",
-    number: "06",
+    number: "07",
     badge: "AI & Agent Systems",
     title: "Nexa Bank",
     subtitle: "AI-Native Banking with MCP · Policy-grounded RAG compliance",
@@ -154,24 +171,6 @@ const projects: ProjectItem[] = [
       trace:
         "Agent parses intent → queries RAG Policy Context for daily transfer limits & KYC status → invokes MCP tool executeTransfer → validates parameters against Spring Boot core → commits transaction → emits Kafka audit event.",
     },
-  },
-
-  // 3. FULL-STACK & LOGISTICS
-  {
-    id: "waste-no-more",
-    category: "fullstack",
-    number: "07",
-    badge: "Full-Stack & Logistics",
-    title: "Waste No More",
-    subtitle: "Real-time logistics platform · 32% efficiency boost · WebSocket sub-200ms",
-    description:
-      "Hyper-local on-demand logistics platform connecting perishable food donors with nearby volunteers using MongoDB 2dsphere spatial indexing ($near queries) and Socket.io real-time concurrency locking.",
-    metrics: "2dsphere $near · Socket.io Sync · Next.js 16",
-    stack: ["Next.js 16", "React 19", "Node.js", "Express 5", "MongoDB", "Socket.io", "Tailwind"],
-    github: "https://github.com/25Rohit25/Waste-No-More",
-    live: "https://waste-no-more.vercel.app/",
-    gradient: "from-[#059669] via-[#10b981] to-[#34d399]",
-    accentColor: "#059669",
   },
   {
     id: "fitlife",
