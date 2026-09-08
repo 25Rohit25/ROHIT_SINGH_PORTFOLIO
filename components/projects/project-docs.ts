@@ -1168,6 +1168,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     status: "Production Deployed (Vercel & Render)",
     githubUrl: "https://github.com/25Rohit25/Bhopal-Food",
     liveUrl: "https://bhopal-food.vercel.app/",
+    thumbnail: "/projects/bhopal-food-hero.png",
     accentColor: "#db2777",
     gradient: "from-[#db2777] via-[#ec4899] to-[#f472b6]",
     aim: {

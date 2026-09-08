@@ -169,6 +169,7 @@ const projects: ProjectItem[] = [
     stack: ["React", "Vite", "Node.js", "Express", "Socket.io", "MongoDB Atlas", "Tailwind"],
     github: "https://github.com/25Rohit25/Bhopal-Food",
     live: "https://bhopal-food.vercel.app/",
+    thumbnail: "/projects/bhopal-food-hero.png",
     gradient: "from-[#db2777] via-[#ec4899] to-[#f472b6]",
     accentColor: "#db2777",
   },

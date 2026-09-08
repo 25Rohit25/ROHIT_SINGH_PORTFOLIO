@@ -314,6 +314,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                       ? "valiant.sre // change-impact-radar"
                       : project.id === "realtime-chat"
                       ? "chat.app // full-duplex-socket"
+                      : project.id === "bhopal-food"
+                      ? "bhopalfood.com // train-catering"
                       : `${project.id}.app // dashboard`}
                   </span>
                 </div>
@@ -321,7 +323,9 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   {project.id === "valiant"
                     ? "http://localhost:3000 (Valiant Radar Dashboard)"
                     : project.id === "realtime-chat"
-                    ? "http://localhost:5000 (Real-Time Chat | #backend-team)"
+                    ? "http://localhost:3000 (Real-Time Chat | #general)"
+                    : project.id === "bhopal-food"
+                    ? "https://bhopal-food.vercel.app (Bhopal Food Choice)"
                     : `https://${project.id}.rohit.engineering/dashboard`}
                 </div>
                 <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 font-mono text-[9px] font-semibold text-emerald-800">
