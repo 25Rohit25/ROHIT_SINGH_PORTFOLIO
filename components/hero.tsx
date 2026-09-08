@@ -83,7 +83,7 @@ function Header() {
   }, []);
 
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between px-4 py-4 text-[10px] uppercase tracking-[0.22em] transition-colors duration-300 sm:px-7 sm:py-7 lg:px-10">
+    <header id="main-portfolio-header" className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between px-4 py-4 text-[10px] uppercase tracking-[0.22em] transition-colors duration-300 sm:px-7 sm:py-7 lg:px-10">
       <a
         className="pointer-events-auto group flex flex-col gap-0.5 leading-none"
         href="#hero"

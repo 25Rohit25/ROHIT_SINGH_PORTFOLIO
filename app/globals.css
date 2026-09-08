@@ -97,3 +97,17 @@ body {
   display: none;
 }
 
+/* Modal Open: Hide background fixed header and scroll indicator to avoid visual collision */
+body.modal-open #main-portfolio-header,
+body.modal-open header.fixed {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Modal container smooth scrolling & overscroll containment */
+#project-modal-backdrop {
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+

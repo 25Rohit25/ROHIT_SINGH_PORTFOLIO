@@ -26,6 +26,8 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       touchMultiplier: 1.6,
     });
 
+    (window as any).__lenis = lenis;
+
     const updateScrollTrigger = () => ScrollTrigger.update();
     lenis.on("scroll", updateScrollTrigger);
 
@@ -37,7 +39,20 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
 
     frameId = window.requestAnimationFrame(raf);
 
+    // Watch for modal-open on body to automatically stop/resume Lenis
+    const observer = new MutationObserver(() => {
+      if (document.body.classList.contains("modal-open")) {
+        lenis.stop();
+      } else {
+        lenis.start();
+      }
+    });
+
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+
     return () => {
+      observer.disconnect();
+      delete (window as any).__lenis;
       window.cancelAnimationFrame(frameId);
       lenis.off("scroll", updateScrollTrigger);
       lenis.destroy();

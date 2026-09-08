@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProjectWhitepaper } from "./project-docs";
 import {
@@ -19,11 +20,16 @@ type AudienceLayer = "recruiter" | "engineer" | "technical";
 type ModalTab = "architecture" | "simulators" | "problem" | "benchmarks" | "stack" | "roadmap";
 
 export default function ProjectModal({ project, onClose }: ProjectModalProps) {
+  const [mounted, setMounted] = useState<boolean>(false);
   const [audienceLayer, setAudienceLayer] = useState<AudienceLayer>("engineer");
   const [activeTab, setActiveTab] = useState<ModalTab>("architecture");
   const [activeNodeIndex, setActiveNodeIndex] = useState<number>(0);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [copiedPayload, setCopiedPayload] = useState<boolean>(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Reset tab & node selection when project changes
   useEffect(() => {
@@ -42,22 +48,30 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     return () => clearInterval(interval);
   }, [isSimulating, project]);
 
-  // Close on Escape key
+  // Close on Escape key and manage body modal-open + Lenis pause
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     if (project) {
       window.addEventListener("keydown", handleKeyDown);
+      document.body.classList.add("modal-open");
       document.body.style.overflow = "hidden";
+      if ((window as any).__lenis) {
+        (window as any).__lenis.stop();
+      }
     }
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "auto";
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "";
+      if ((window as any).__lenis) {
+        (window as any).__lenis.start();
+      }
     };
   }, [project, onClose]);
 
-  if (!project) return null;
+  if (!project || !mounted) return null;
 
   const activeNode = project.architecture.pipeline[activeNodeIndex] || project.architecture.pipeline[0];
   const isPayflow = project.id === "payflow";
@@ -77,15 +91,21 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     { id: "roadmap", label: "Future Roadmap", icon: "🚀" },
   ];
 
-  return (
+  const modalContent = (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 24 }}
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed inset-0 z-[9999] overflow-y-auto bg-[#f8fafc] text-slate-900"
+      <div
+        id="project-modal-backdrop"
+        data-lenis-prevent="true"
+        className="fixed inset-0 z-[999999] overflow-y-auto overscroll-contain bg-[#f8fafc] text-slate-900"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="min-h-full"
+        >
         {/* Sticky Top Navigation Bar */}
         <header className="sticky top-0 z-50 flex items-center justify-between border-b border-slate-200/90 bg-white/95 px-4 py-3 backdrop-blur-md sm:px-8 sm:py-3.5 shadow-xs">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -286,11 +306,12 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               </div>
 
               {/* Full Resolution Screenshot Image */}
-              <div className="relative overflow-hidden bg-slate-900">
+              <div className="relative overflow-hidden bg-slate-900 max-h-[460px]">
                 <img
                   src={project.thumbnail}
                   alt={`${project.title} Interface`}
                   className="w-full h-auto object-cover object-top"
+                  loading="eager"
                 />
               </div>
             </div>
@@ -1009,7 +1030,10 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             </div>
           </div>
         </main>
-      </motion.div>
+        </motion.div>
+      </div>
     </AnimatePresence>
   );
+
+  return createPortal(modalContent, document.body);
 }
