@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ProjectModal from "./projects/project-modal";
+import { projectDocs } from "./projects/project-docs";
 
 type ProjectCategory = "all" | "backend" | "ai" | "fullstack" | "creative3d" | "systems";
 
@@ -277,6 +279,7 @@ const tabs = [
 export default function Projects() {
   const [activeTab, setActiveTab] = useState<ProjectCategory>("all");
   const [expandedCaseStudy, setExpandedCaseStudy] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const filtered =
     activeTab === "all" ? projects : projects.filter((p) => p.category === activeTab);
@@ -415,9 +418,13 @@ export default function Projects() {
 
                   {/* Bottom White Content Section */}
                   <div className="p-6 sm:p-7">
-                    <h3 className="text-xl font-bold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProjectId(proj.id)}
+                      className="text-left text-xl font-bold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors cursor-pointer"
+                    >
                       {proj.title}
-                    </h3>
+                    </button>
                     
                     {/* Blue / Accent Highlight Subtitle (Matching Reference Image) */}
                     <p className="mt-2 text-xs font-semibold leading-relaxed text-blue-600">
@@ -446,11 +453,16 @@ export default function Projects() {
                   </div>
                 </div>
 
-                {/* Card Footer with Case Study / Links */}
+                {/* Card Footer with Deep Dive / Summary / Repo */}
                 <div className="border-t border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/50">
-                  <span className="text-[11px] font-mono text-slate-500">
-                    {proj.category.toUpperCase()}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProjectId(proj.id)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-600 hover:shadow-md active:scale-95 cursor-pointer"
+                  >
+                    <span>Deep Dive</span>
+                    <span className="text-[10px]">↗</span>
+                  </button>
 
                   <div className="flex items-center gap-3">
                     {proj.caseStudy && (
@@ -461,9 +473,9 @@ export default function Projects() {
                             expandedCaseStudy === proj.id ? null : proj.id
                           )
                         }
-                        className="text-xs font-bold text-orange-600 hover:text-orange-700 transition-colors"
+                        className="text-xs font-bold text-orange-600 hover:text-orange-700 transition-colors cursor-pointer"
                       >
-                        {expandedCaseStudy === proj.id ? "Hide Case Study ↑" : "Case Study ↓"}
+                        {expandedCaseStudy === proj.id ? "Hide Summary ↑" : "Summary ↓"}
                       </button>
                     )}
                     <a
@@ -477,7 +489,7 @@ export default function Projects() {
                   </div>
                 </div>
 
-                {/* Expandable Case Study (if toggled) */}
+                {/* Expandable Case Study Quick Summary (if toggled) */}
                 {proj.caseStudy && expandedCaseStudy === proj.id && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -497,6 +509,16 @@ export default function Projects() {
                       <span className="font-bold text-emerald-600 uppercase text-[10px]">Performance:</span>
                       <p className="mt-0.5 text-slate-600">{proj.caseStudy.performance}</p>
                     </div>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedProjectId(proj.id)}
+                        className="font-bold text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Open Full MIT/Harvard Architectural Whitepaper</span>
+                        <span>→</span>
+                      </button>
+                    </div>
                   </motion.div>
                 )}
               </motion.div>
@@ -504,6 +526,12 @@ export default function Projects() {
           </AnimatePresence>
         </motion.div>
       </div>
+
+      {/* MIT/Harvard Academic Project Deep-Dive Modal */}
+      <ProjectModal
+        project={selectedProjectId ? projectDocs[selectedProjectId] || null : null}
+        onClose={() => setSelectedProjectId(null)}
+      />
     </section>
   );
 }
