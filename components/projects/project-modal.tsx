@@ -68,86 +68,94 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-8">
-        {/* Backdrop blur */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity"
-        />
-
-        {/* Modal Container */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97, y: 16 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.97, y: 16 }}
-          transition={{ type: "spring", damping: 30, stiffness: 350 }}
-          className="relative z-10 flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-[#fdfdfc] shadow-2xl md:rounded-3xl"
-        >
-          {/* Top Bar */}
-          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 py-3.5 sm:px-8 sm:py-4">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <span className="rounded-md bg-blue-600 px-2.5 py-1 font-mono text-[10px] font-bold text-white tracking-wider">
-                {project.specId}
-              </span>
-              <span className="hidden h-3 w-px bg-slate-200 sm:inline-block" />
-              <span className="rounded-full bg-slate-100 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
-                {project.categoryBadge}
-              </span>
-              <span className="hidden rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[9px] font-semibold text-emerald-700 md:inline-block">
-                ✓ {project.status}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <a
-                href={project.githubUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
-              >
-                <span>GitHub</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-
-              {project.liveUrl && (
-                <a
-                  href={project.liveUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hidden items-center gap-1.5 rounded-full bg-blue-600 px-3.5 py-1 text-xs font-semibold text-white shadow-sm transition-all hover:bg-blue-700 sm:inline-flex"
-                >
-                  <span>Live Demo</span>
-                  <span className="text-[10px]">↗</span>
-                </a>
-              )}
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-900"
-                aria-label="Close modal"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 24 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="fixed inset-0 z-[9999] overflow-y-auto bg-[#f8fafc] text-slate-900"
+      >
+        {/* Sticky Top Navigation Bar */}
+        <header className="sticky top-0 z-50 flex items-center justify-between border-b border-slate-200/90 bg-white/95 px-4 py-3 backdrop-blur-md sm:px-8 sm:py-3.5 shadow-xs">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-xs transition-all hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+            >
+              <span className="text-sm">←</span>
+              <span>Back to Projects</span>
+            </button>
+            <span className="hidden h-4 w-px bg-slate-200 sm:inline-block" />
+            <span className="rounded-md bg-blue-600 px-2.5 py-1 font-mono text-[10px] font-bold text-white tracking-wider">
+              {project.specId}
+            </span>
+            <span className="hidden rounded-full bg-slate-100 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 sm:inline-block">
+              {project.categoryBadge}
+            </span>
+            <span className="hidden rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[9px] font-semibold text-emerald-700 md:inline-block">
+              ✓ {project.status}
+            </span>
           </div>
 
-          {/* Project Title Header */}
-          <div className="border-b border-slate-200 bg-white px-5 pt-5 pb-4 sm:px-8">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
+          <div className="flex items-center gap-2.5">
+            <a
+              href={project.githubUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+            >
+              <span>GitHub</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+
+            {project.liveUrl && (
+              <a
+                href={project.liveUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="hidden items-center gap-1.5 rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-blue-700 sm:inline-flex"
+              >
+                <span>Live Demo</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+            )}
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-xs transition-colors hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+              aria-label="Close"
+              title="Close (Esc)"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        {/* Full Page Content Container */}
+        <main className="mx-auto max-w-5xl px-4 py-8 sm:px-8 sm:py-10 md:py-12">
+          {/* Project Title & Category Card */}
+          <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 md:p-10 shadow-xs">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span className="font-semibold text-blue-600">{project.specId}</span>
+              <span>•</span>
+              <span>Authored by <strong className="text-slate-800">{project.authorship}</strong></span>
+              <span>•</span>
+              <span>{project.aim.targetDomain}</span>
+            </div>
+
+            <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-4xl">
               {project.title}
             </h1>
-            <p className="mt-1 text-xs font-medium text-slate-600 sm:text-sm">
+            <p className="mt-2 text-sm font-medium text-slate-600 sm:text-base leading-relaxed">
               {project.subtitle}
             </p>
 
             {/* Interactive Section Switcher Tabs */}
-            <div className="mt-5 flex gap-1.5 overflow-x-auto border-t border-slate-100 pt-3 scrollbar-none">
+            <div className="mt-7 flex gap-2 overflow-x-auto border-t border-slate-100 pt-5 scrollbar-none">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -155,7 +163,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                    className={`relative shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                       isActive
                         ? "bg-slate-900 text-white shadow-sm"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900"
@@ -169,18 +177,18 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             </div>
           </div>
 
-          {/* Scrollable Main Content Area */}
-          <div className="overflow-y-auto px-5 py-6 sm:px-8 sm:py-8">
+          {/* Section Body Card */}
+          <div className="mt-8 rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 md:p-10 shadow-xs">
             {/* TAB 1: ARCHITECTURE & INTERACTIVE FLOW SIMULATOR */}
             {activeTab === "architecture" && (
               <div className="space-y-8">
-                {/* Interactive Simulator Header */}
+                {/* Simulator Header & Controls */}
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
+                    <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
                       {project.architecture.diagramType}
                     </h2>
-                    <p className="text-xs text-slate-600 sm:text-sm">
+                    <p className="mt-1 text-xs text-slate-600 sm:text-sm">
                       {project.architecture.summary}
                     </p>
                   </div>
@@ -213,7 +221,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     </span>
                   </div>
 
-                  {/* Node Grid with Connecting Arrows */}
+                  {/* Node Grid */}
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                     {project.architecture.pipeline.map((node, index) => {
                       const isSelected = activeNodeIndex === index;
@@ -291,7 +299,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                       {activeNode.description}
                     </p>
 
-                    {/* Code / Payload Example if available */}
+                    {/* Code / Payload Example */}
                     {activeNode.payloadExample && (
                       <div className="mt-4">
                         <div className="flex items-center justify-between rounded-t-lg bg-slate-950 px-3.5 py-1.5 text-[10px] font-mono text-slate-400">
@@ -312,16 +320,16 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   </div>
                 </div>
 
-                {/* Key Architectural Mechanisms & Invariants */}
+                {/* Key Architectural Invariants */}
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-lg font-bold text-slate-900">
                     Key Architectural Invariants &amp; Algorithms
                   </h3>
                   <div className="mt-4 space-y-4">
                     {project.architecture.keyMechanisms.map((mech) => (
                       <div
                         key={mech.title}
-                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs"
                       >
                         <h4 className="text-sm font-bold text-slate-900">
                           {mech.title}
@@ -362,7 +370,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
                 {/* The Real-World Bottleneck */}
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-lg font-bold text-slate-900">
                     The Problem &amp; The Danger of Naive Approaches
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
@@ -398,7 +406,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             {activeTab === "benchmarks" && (
               <div className="space-y-8">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-lg font-bold text-slate-900">
                     Measured Production Benchmarks &amp; Performance
                   </h3>
                   <p className="mt-1 text-sm text-slate-600">
@@ -410,7 +418,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     {project.benefits.metrics.map((m) => (
                       <div
                         key={m.label}
-                        className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm"
+                        className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-xs"
                       >
                         <div className="font-mono text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                           {m.value}
@@ -447,7 +455,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             {activeTab === "stack" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-lg font-bold text-slate-900">
                     Tech Stack Selection &amp; Architectural Trade-offs
                   </h3>
                   <p className="mt-1 text-sm text-slate-600">
@@ -455,7 +463,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   </p>
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
                   <table className="w-full text-left text-xs sm:text-sm">
                     <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                       <tr>
@@ -473,7 +481,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                           <td className="px-5 py-3.5 text-slate-600 font-medium">
                             {item.role}
                           </td>
-                          <td className="px-5 py-3.5 text-xs text-slate-600">
+                          <td className="px-5 py-3.5 text-xs text-slate-600 leading-relaxed">
                             {item.rationale}
                           </td>
                         </tr>
@@ -488,7 +496,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             {activeTab === "roadmap" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-lg font-bold text-slate-900">
                     Future Scalability &amp; Engineering Roadmap
                   </h3>
                   <p className="mt-1 text-sm text-slate-600">
@@ -500,9 +508,9 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   {project.roadmap.map((road) => (
                     <div
                       key={road.phase}
-                      className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-start sm:gap-6 shadow-sm"
+                      className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-start sm:gap-6 shadow-xs"
                     >
-                      <span className="w-24 shrink-0 rounded-md bg-slate-900 px-2.5 py-1 text-center font-mono text-xs font-bold text-white">
+                      <span className="w-28 shrink-0 rounded-md bg-slate-900 px-2.5 py-1 text-center font-mono text-xs font-bold text-white">
                         {road.phase}
                       </span>
                       <div>
@@ -520,18 +528,18 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             )}
           </div>
 
-          {/* Bottom Footer Actions */}
-          <div className="flex shrink-0 items-center justify-between border-t border-slate-200 bg-white px-5 py-3.5 sm:px-8">
-            <span className="text-[11px] font-medium text-slate-500">
-              Authored by <span className="font-semibold text-slate-800">{project.authorship}</span>
+          {/* Bottom Action Footer */}
+          <div className="mt-8 mb-12 flex flex-col items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:flex-row shadow-xs">
+            <span className="text-xs text-slate-500">
+              System Specification: <strong className="text-slate-800">{project.specId}</strong> · All tests passing
             </span>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <a
                 href={project.githubUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-black"
+                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-black"
               >
                 <span>Inspect Source on GitHub</span>
                 <span className="text-xs">↗</span>
@@ -540,14 +548,14 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 cursor-pointer"
+                className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
               >
-                Close Deep Dive
+                ← Return to Portfolio
               </button>
             </div>
           </div>
-        </motion.div>
-      </div>
+        </main>
+      </motion.div>
     </AnimatePresence>
   );
 }
