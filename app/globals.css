@@ -79,11 +79,12 @@ body {
 
 @media (max-width: 768px) {
   .hero-track {
-    height: 100svh;
+    height: 420vh;
   }
 
   .hero-stage {
-    min-height: 0;
+    height: 100svh;
+    min-height: 100svh;
   }
 }
 

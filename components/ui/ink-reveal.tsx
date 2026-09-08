@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import type { CSSProperties, MouseEvent } from "react";
+import type { CSSProperties, MouseEvent, TouchEvent } from "react";
 
 interface InkRevealProps {
   /** RGB color of the mask overlay, e.g. [252, 250, 248] */
@@ -302,6 +302,13 @@ export default function InkReveal({
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
+  const getRelativeTouchPos = (event: TouchEvent<HTMLCanvasElement>) => {
+    if (!event.touches.length) return null;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const touch = event.touches[0];
+    return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+  };
+
   return (
     <canvas
       ref={canvasRef}
@@ -312,6 +319,7 @@ export default function InkReveal({
         inset: 0,
         zIndex: 1,
         cursor: "none",
+        touchAction: "pan-y",
         ...style,
       }}
       onMouseEnter={(event) => {
@@ -326,6 +334,24 @@ export default function InkReveal({
         startLoop();
       }}
       onMouseLeave={() => {
+        lastPosRef.current = null;
+      }}
+      onTouchStart={(event) => {
+        const pos = getRelativeTouchPos(event);
+        if (pos) {
+          lastPosRef.current = pos;
+          stampAlong(pos.x, pos.y);
+          startLoop();
+        }
+      }}
+      onTouchMove={(event) => {
+        const pos = getRelativeTouchPos(event);
+        if (pos) {
+          stampAlong(pos.x, pos.y);
+          startLoop();
+        }
+      }}
+      onTouchEnd={() => {
         lastPosRef.current = null;
       }}
     />

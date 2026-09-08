@@ -83,20 +83,20 @@ function Header() {
   }, []);
 
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between px-5 py-5 text-[10px] uppercase tracking-[0.22em] transition-colors duration-300 sm:px-7 sm:py-7 lg:px-10">
+    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between px-4 py-4 text-[10px] uppercase tracking-[0.22em] transition-colors duration-300 sm:px-7 sm:py-7 lg:px-10">
       <a
-        className="pointer-events-auto group flex flex-col gap-1 leading-none"
+        className="pointer-events-auto group flex flex-col gap-0.5 leading-none"
         href="#hero"
       >
         <span
-          className={`font-semibold text-[13px] tracking-[-0.03em] transition-colors duration-300 sm:text-sm ${
+          className={`font-semibold text-xs tracking-[-0.03em] transition-colors duration-300 sm:text-sm ${
             scrolledPastHero ? "text-slate-900" : "text-[#f4f1eb]"
           }`}
         >
           ROHIT SINGH
         </span>
         <span
-          className={`text-[8px] tracking-[0.32em] transition-colors duration-300 ${
+          className={`text-[7.5px] tracking-[0.28em] transition-colors duration-300 ${
             scrolledPastHero ? "text-slate-500 group-hover:text-slate-900" : "text-white/50 group-hover:text-white/80"
           }`}
         >
@@ -136,7 +136,7 @@ function Header() {
       </nav>
 
       <a
-        className={`pointer-events-auto group flex items-center gap-2 rounded-full py-1.5 pl-4 pr-1.5 text-[9px] font-semibold tracking-[0.18em] transition-all sm:py-2 sm:pl-5 sm:pr-2 ${
+        className={`pointer-events-auto group flex items-center gap-1.5 rounded-full py-1.5 pl-3.5 pr-1.5 text-[8.5px] font-semibold tracking-[0.16em] transition-all sm:py-2 sm:pl-5 sm:pr-2 sm:text-[9px] ${
           scrolledPastHero
             ? "bg-slate-900 text-white hover:bg-black shadow-[0_4px_16px_rgba(15,23,42,0.15)]"
             : "bg-[#f4f1eb] text-black hover:bg-white hover:shadow-[0_0_20px_rgba(244,241,235,0.3)]"
@@ -145,11 +145,11 @@ function Header() {
       >
         <span>Get in Touch</span>
         <span
-          className={`flex h-6 w-6 items-center justify-center rounded-full transition-transform duration-300 group-hover:translate-x-0.5 sm:h-7 sm:w-7 ${
+          className={`flex h-5 w-5 items-center justify-center rounded-full transition-transform duration-300 group-hover:translate-x-0.5 sm:h-7 sm:w-7 ${
             scrolledPastHero ? "bg-white text-slate-900" : "bg-black text-[#f4f1eb]"
           }`}
         >
-          <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 16 16">
+          <svg aria-hidden="true" className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" viewBox="0 0 16 16">
             <path
               d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"
               stroke="currentColor"
@@ -182,7 +182,11 @@ function TextDrum({
 
       beatRefs.current.forEach((beat, index) => {
         if (!beat) return;
-        beat.style.transform = beatTransform(index - drumPosition);
+        const offset = index - drumPosition;
+        beat.style.transform = beatTransform(offset);
+        const opacity = clamp(1 - Math.abs(offset) * 1.35, 0, 1);
+        beat.style.opacity = String(opacity);
+        beat.style.pointerEvents = Math.abs(offset) < 0.35 ? "auto" : "none";
       });
 
       frameId = window.requestAnimationFrame(animate);
@@ -196,20 +200,20 @@ function TextDrum({
     <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
       {beats.map((beat, index) => (
         <div
-          className="hero-beat absolute left-[clamp(1rem,5vw,7.5rem)] top-1/2 w-[min(46rem,calc(100vw-2rem))] -translate-y-1/2"
+          className="hero-beat absolute left-[clamp(1rem,5vw,7.5rem)] top-1/2 w-[min(46rem,calc(100vw-2rem))] -translate-y-1/2 transition-opacity duration-75"
           key={beat.eyebrow}
           ref={(element) => {
             beatRefs.current[index] = element;
           }}
           style={{ transform: beatTransform(index) }}
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1.5 text-[9px] font-semibold tracking-[0.24em] text-white/80 backdrop-blur-md sm:mb-5">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1.5 text-[9px] font-semibold tracking-[0.24em] text-white/80 backdrop-blur-md sm:mb-5">
             <span className="h-1.5 w-1.5 rounded-full bg-[#ff6b51] shadow-[0_0_12px_rgba(255,107,81,0.8)]" />
             {beat.eyebrow}
           </div>
 
           <h1
-            className="text-[clamp(2rem,6vw,6rem)] font-semibold leading-[0.92] tracking-[-0.04em] text-[#f4f1eb]"
+            className="text-[clamp(2.1rem,6.5vw,6rem)] font-semibold leading-[0.94] tracking-[-0.04em] text-[#f4f1eb]"
           >
             <span className="block">{beat.firstLine}</span>
             <span className="block">{beat.secondLine}</span>
@@ -218,17 +222,17 @@ function TextDrum({
             </span>
           </h1>
 
-          <p className="mt-4 max-w-lg text-xs leading-relaxed text-white/70 sm:mt-6 sm:text-sm md:text-[15px]">
+          <p className="mt-3 max-w-lg text-xs leading-relaxed text-white/75 sm:mt-6 sm:text-sm md:text-[15px]">
             {beat.copy}
           </p>
 
           {beat.hasCtas && (
-            <div className="mt-5 flex flex-col gap-3 sm:mt-7 sm:gap-4">
+            <div className="mt-4 flex flex-col gap-3 sm:mt-7 sm:gap-4">
               {/* Action CTAs */}
               <div className="pointer-events-auto flex flex-wrap items-center gap-2">
                 <a
                   href="#projects"
-                  className="inline-flex items-center gap-2 rounded-full bg-[#f4f1eb] px-4 py-2 text-[11px] font-semibold tracking-[0.14em] text-black transition-all hover:bg-white hover:shadow-[0_0_20px_rgba(244,241,235,0.25)] sm:px-5 sm:py-2.5 sm:text-xs"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#f4f1eb] px-4 py-2 text-[11px] font-semibold tracking-[0.14em] text-black transition-all active:scale-95 hover:bg-white hover:shadow-[0_0_20px_rgba(244,241,235,0.25)] sm:px-5 sm:py-2.5 sm:text-xs"
                 >
                   <span>View Projects</span>
                   <span className="text-xs">↓</span>
@@ -238,7 +242,7 @@ function TextDrum({
                   href="/Rohit_Singh_Resume.pdf"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-2 text-[11px] font-medium tracking-wider text-white transition-colors hover:border-white/40 hover:bg-white/10 sm:px-4 sm:py-2.5 sm:text-xs"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-2 text-[11px] font-medium tracking-wider text-white transition-colors active:scale-95 hover:border-white/40 hover:bg-white/10 sm:px-4 sm:py-2.5 sm:text-xs"
                 >
                   <span>Resume</span>
                   <span className="text-[10px]">↗</span>
@@ -248,7 +252,7 @@ function TextDrum({
                   href="https://github.com/25Rohit25"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-2 text-[11px] font-medium tracking-wider text-white transition-colors hover:border-white/40 hover:bg-white/10 sm:px-4 sm:py-2.5 sm:text-xs"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-2 text-[11px] font-medium tracking-wider text-white transition-colors active:scale-95 hover:border-white/40 hover:bg-white/10 sm:px-4 sm:py-2.5 sm:text-xs"
                 >
                   <span>GitHub</span>
                   <span className="text-[10px]">↗</span>
@@ -258,6 +262,55 @@ function TextDrum({
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+function MobileBeatIndicator({ progressRef }: { progressRef: ProgressRef }) {
+  const [activeBeat, setActiveBeat] = useState(0);
+  const [fadeAlpha, setFadeAlpha] = useState(1);
+
+  useEffect(() => {
+    let frameId = 0;
+    const update = () => {
+      const p = progressRef.current;
+      const beat = clamp(Math.round(p * (BEAT_COUNT - 1)), 0, BEAT_COUNT - 1);
+      setActiveBeat(beat);
+      const alpha = clamp(1 - (p - 0.88) / 0.1, 0, 1);
+      setFadeAlpha(alpha);
+      frameId = requestAnimationFrame(update);
+    };
+    frameId = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(frameId);
+  }, [progressRef]);
+
+  if (fadeAlpha <= 0) return null;
+
+  return (
+    <div
+      className="pointer-events-none absolute bottom-5 inset-x-0 z-30 flex items-center justify-between px-5 transition-opacity sm:px-8 lg:hidden"
+      style={{ opacity: fadeAlpha }}
+    >
+      <div className="flex items-center gap-1.5 rounded-full border border-white/15 bg-black/60 px-3 py-1.5 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+        {Array.from({ length: BEAT_COUNT }).map((_, i) => (
+          <span
+            key={i}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              activeBeat === i
+                ? "w-5 bg-[#ff6b51] shadow-[0_0_10px_rgba(255,107,81,0.9)]"
+                : "w-1.5 bg-white/30"
+            }`}
+          />
+        ))}
+        <span className="ml-1.5 text-[8.5px] font-semibold tracking-[0.2em] text-white/80 uppercase">
+          0{activeBeat + 1} / 0{BEAT_COUNT}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md text-[8.5px] font-medium tracking-[0.2em] text-white/70 uppercase">
+        <span>Scroll</span>
+        <span className="text-[10px] animate-bounce">↓</span>
+      </div>
     </div>
   );
 }
@@ -306,9 +359,8 @@ export default function Hero() {
 
   useEffect(() => {
     const modeFrame = window.requestAnimationFrame(() => {
-      const isCompact = window.matchMedia("(max-width: 768px)").matches;
       const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      setMode(isCompact || isReduced ? "static" : "sequence");
+      setMode(isReduced ? "static" : "sequence");
     });
 
     return () => window.cancelAnimationFrame(modeFrame);
@@ -358,8 +410,22 @@ export default function Hero() {
       const floorFrame = clamp(Math.floor(position), 0, FRAME_COUNT - 1);
       const nextFrame = Math.min(floorFrame + 1, FRAME_COUNT - 1);
       const fraction = position - floorFrame;
-      const floorImage = framesRef.current[floorFrame];
+      let floorImage = framesRef.current[floorFrame];
       const nextImage = framesRef.current[nextFrame];
+
+      // Fallback: If target frame is still loading, find nearest loaded frame
+      if (!floorImage?.naturalWidth) {
+        for (let delta = 1; delta < FRAME_COUNT; delta++) {
+          if (floorFrame - delta >= 0 && framesRef.current[floorFrame - delta]?.naturalWidth) {
+            floorImage = framesRef.current[floorFrame - delta];
+            break;
+          }
+          if (floorFrame + delta < FRAME_COUNT && framesRef.current[floorFrame + delta]?.naturalWidth) {
+            floorImage = framesRef.current[floorFrame + delta];
+            break;
+          }
+        }
+      }
 
       if (!floorImage?.naturalWidth) return;
 
@@ -390,10 +456,19 @@ export default function Hero() {
       canvas.style.opacity = "1";
     };
 
+    // Staggered image loading: priority to first batch
     images.forEach((image, index) => {
       image.decoding = "async";
       image.onload = index === 0 ? revealFirstFrame : null;
-      image.src = frameUrl(index);
+      if (index < 20) {
+        image.src = frameUrl(index);
+      } else {
+        setTimeout(() => {
+          if (!destroyed) {
+            image.src = frameUrl(index);
+          }
+        }, 50 + Math.floor(index / 10) * 30);
+      }
     });
 
     const observer = new IntersectionObserver(
@@ -414,8 +489,30 @@ export default function Hero() {
       pointerTargetRef.current = { x: 0, y: 0 };
     };
 
+    const touchMove = (event: TouchEvent) => {
+      if (event.touches.length > 0) {
+        const touch = event.touches[0];
+        pointerTargetRef.current = {
+          x: (touch.clientX / window.innerWidth) * 2 - 1,
+          y: (touch.clientY / window.innerHeight) * 2 - 1,
+        };
+      }
+    };
+
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      if (event.gamma !== null && event.beta !== null) {
+        const normX = clamp(event.gamma / 25, -1, 1);
+        const normY = clamp((event.beta - 40) / 25, -1, 1);
+        pointerTargetRef.current = { x: normX, y: normY };
+      }
+    };
+
     window.addEventListener("pointermove", pointerMove, { passive: true });
     window.addEventListener("pointerleave", pointerLeave);
+    window.addEventListener("touchmove", touchMove, { passive: true });
+    if (typeof window !== "undefined" && "DeviceOrientationEvent" in window) {
+      window.addEventListener("deviceorientation", handleOrientation, { passive: true });
+    }
     window.addEventListener("resize", resizeCanvas);
 
     let frameId = 0;
@@ -460,6 +557,10 @@ export default function Hero() {
       observer.disconnect();
       window.removeEventListener("pointermove", pointerMove);
       window.removeEventListener("pointerleave", pointerLeave);
+      window.removeEventListener("touchmove", touchMove);
+      if (typeof window !== "undefined" && "DeviceOrientationEvent" in window) {
+        window.removeEventListener("deviceorientation", handleOrientation);
+      }
       window.removeEventListener("resize", resizeCanvas);
       images.forEach((image) => {
         image.onload = null;
@@ -532,6 +633,7 @@ export default function Hero() {
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-black/35 to-transparent" />
 
           <TextDrum active={mode !== "static"} progressRef={progressRef} />
+          <MobileBeatIndicator progressRef={progressRef} />
           <MetaRail />
         </section>
       </main>
