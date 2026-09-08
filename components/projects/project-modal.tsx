@@ -16,6 +16,14 @@ import {
   ValiantSchemaVisualizer,
   ValiantAttributionCard,
 } from "./valiant-interactive";
+import {
+  ChatSyncSimulator,
+  HttpVsSocketSimulator,
+  RoomIsolationVisualizer,
+  ChatSchemaVisualizer,
+  TransientVsPersistentMatrix,
+  RedisClusterArchitecture,
+} from "./chat-interactive";
 
 interface ProjectModalProps {
   project: ProjectWhitepaper | null;
@@ -82,6 +90,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
   const activeNode = project.architecture.pipeline[activeNodeIndex] || project.architecture.pipeline[0];
   const isPayflow = project.id === "payflow";
   const isValiant = project.id === "valiant";
+  const isChat = project.id === "realtime-chat";
 
   const copyCode = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -91,7 +100,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
   const tabs: { id: ModalTab; label: string; icon: string }[] = [
     { id: "architecture", label: "Architecture & Journey", icon: "⚡" },
-    ...(isPayflow || isValiant ? [{ id: "simulators" as ModalTab, label: "Interactive Simulators", icon: "🎮" }] : []),
+    ...(isPayflow || isValiant || isChat ? [{ id: "simulators" as ModalTab, label: "Interactive Simulators", icon: "🎮" }] : []),
     { id: "problem", label: "Problem & Solution", icon: "🎯" },
     { id: "benchmarks", label: "Benchmarks & Impact", icon: "📊" },
     { id: "stack", label: "Tech Stack & Trade-offs", icon: "🛠️" },
@@ -301,11 +310,19 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
                   <span className="h-3 w-3 rounded-full bg-[#27c93f]" />
                   <span className="ml-2 font-mono text-[11px] text-slate-400 hidden sm:inline-block">
-                    {project.id === "valiant" ? "valiant.sre // change-impact-radar" : `${project.id}.app // dashboard`}
+                    {project.id === "valiant"
+                      ? "valiant.sre // change-impact-radar"
+                      : project.id === "realtime-chat"
+                      ? "chat.app // full-duplex-socket"
+                      : `${project.id}.app // dashboard`}
                   </span>
                 </div>
                 <div className="rounded-md bg-slate-200/60 px-3 py-1 font-mono text-[10px] text-slate-600 truncate max-w-xs sm:max-w-md">
-                  {project.id === "valiant" ? "http://localhost:3000 (Valiant Radar Dashboard)" : `https://${project.id}.rohit.engineering/dashboard`}
+                  {project.id === "valiant"
+                    ? "http://localhost:3000 (Valiant Radar Dashboard)"
+                    : project.id === "realtime-chat"
+                    ? "http://localhost:5000 (Real-Time Chat | #backend-team)"
+                    : `https://${project.id}.rohit.engineering/dashboard`}
                 </div>
                 <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 font-mono text-[9px] font-semibold text-emerald-800">
                   ● LIVE UI
@@ -727,17 +744,206 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 </div>
               )}
 
-              {/* 05 — THE COMPLETE JOURNEY (VISUAL CENTERPIECE) */}
+              {/* REAL-TIME CHAT STORY & CENTRAL QUESTION */}
+              {isChat && (
+                <div className="rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-50/80 via-white to-slate-50 p-6 sm:p-8 md:p-10 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-blue-600 px-3 py-1 font-mono text-xs font-bold text-white">
+                      SYSTEMS THESIS &amp; CENTRAL QUESTION
+                    </span>
+                  </div>
+
+                  <h2 className="mt-4 text-xl sm:text-2xl font-bold text-slate-900">
+                    How do you make communication feel instantaneous while still keeping identity, rooms, and message history consistent?
+                  </h2>
+
+                  <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-700">
+                    A basic chat interface is easy to draw. The difficult part begins when two browsers must actually stay synchronized.
+                    Imagine Rohit and Priya are inside the same room (<code className="font-mono text-blue-700">#backend-team</code>). Rohit sends: <em className="text-slate-900 font-medium">&quot;Are we still meeting at 5?&quot;</em>
+                  </p>
+
+                  <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-950 p-4 sm:p-6 text-slate-200 font-mono text-xs">
+                    <div className="text-[10px] text-slate-400 font-bold uppercase pb-3 border-b border-slate-800">
+                      Real-Time Event Dispatch Sequence
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-6 text-center">
+                      <div className="rounded-xl border border-blue-500/50 bg-blue-950/40 p-2.5">
+                        <div className="text-[10px] text-blue-400 font-bold">1. USER ACTION</div>
+                        <div className="text-slate-300 mt-1">Rohit types &amp; sends</div>
+                      </div>
+                      <div className="rounded-xl border border-indigo-500/50 bg-indigo-950/40 p-2.5">
+                        <div className="text-[10px] text-indigo-400 font-bold">2. CLIENT SOCKET</div>
+                        <div className="text-slate-300 mt-1">Emits &quot;send_message&quot;</div>
+                      </div>
+                      <div className="rounded-xl border border-purple-500/50 bg-purple-950/40 p-2.5">
+                        <div className="text-[10px] text-purple-400 font-bold">3. NODE / EXPRESS</div>
+                        <div className="text-slate-300 mt-1">JWT verified, parsed</div>
+                      </div>
+                      <div className="rounded-xl border border-emerald-500/50 bg-emerald-950/40 p-2.5">
+                        <div className="text-[10px] text-emerald-400 font-bold">4. MONGO PERSIST</div>
+                        <div className="text-slate-300 mt-1">Mongoose document</div>
+                      </div>
+                      <div className="rounded-xl border border-amber-500/50 bg-amber-950/40 p-2.5">
+                        <div className="text-[10px] text-amber-400 font-bold">5. ROOM BROADCAST</div>
+                        <div className="text-slate-300 mt-1">io.to(room).emit()</div>
+                      </div>
+                      <div className="rounded-xl border border-emerald-500/50 bg-emerald-950/40 p-2.5 ring-2 ring-emerald-500/30">
+                        <div className="text-[10px] text-emerald-300 font-bold">6. PEER UI UPDATE</div>
+                        <div className="text-slate-300 mt-1">Priya &amp; Amit &lt;15ms</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 text-xs">
+                    <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
+                      <strong className="text-slate-900 block font-semibold">Identity Verification</strong>
+                      <span className="text-slate-500">JWT token validates user session, preventing spoofed senders.</span>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
+                      <strong className="text-slate-900 block font-semibold">Room Isolation</strong>
+                      <span className="text-slate-500">Socket rooms guarantee events never leak to unintended channels.</span>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs col-span-2 sm:col-span-1">
+                      <strong className="text-slate-900 block font-semibold">Durable History</strong>
+                      <span className="text-slate-500">Messages survive browser refresh via indexed MongoDB queries.</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* REAL-TIME CHAT 01 — THE MESSAGE LIFECYCLE (INTERACTIVE SIMULATOR) */}
+              {isChat && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="font-mono text-xs font-bold text-blue-600">DECISION 01 // INTERACTIVE SIMULATOR</span>
+                    <h3 className="text-lg font-bold text-slate-900">Live Message Lifecycle &amp; Persistence Pipeline</h3>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed px-1">
+                    Type a message or select a preset below and click <strong>&quot;Emit Socket Event&quot;</strong>. Watch the data packet travel through client emission, Node.js Socket.IO handler, MongoDB persistence, and room-scoped broadcast to Priya and Amit in real time.
+                  </p>
+                  <ChatSyncSimulator />
+                </div>
+              )}
+
+              {/* REAL-TIME CHAT 02 — WHY ORDINARY HTTP IS NOT ENOUGH */}
+              {isChat && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="font-mono text-xs font-bold text-indigo-600">DECISION 02 // PROTOCOL COMPARISON</span>
+                    <h3 className="text-lg font-bold text-slate-900">Why Ordinary HTTP Polling Is Not Enough for Real-Time</h3>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed px-1">
+                    A conventional REST API works well for request-response operations. But chat requires the server to send data <em>without the browser asking first</em>. Compare the HTTP polling penalty vs. Socket.IO full-duplex WebSockets below.
+                  </p>
+                  <HttpVsSocketSimulator />
+                </div>
+              )}
+
+              {/* REAL-TIME CHAT 03 — ROOM-BASED COMMUNICATION & ISOLATION */}
+              {isChat && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="font-mono text-xs font-bold text-purple-600">DECISION 03 // CHANNEL SECURITY</span>
+                    <h3 className="text-lg font-bold text-slate-900">Room Isolation: Preventing Cross-Channel Message Leakage</h3>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed px-1">
+                    A global broadcast architecture would cause confidential messages in one team to leak to another. Socket.IO logical rooms (<code className="font-mono text-purple-700">socket.join(roomId)</code>) partition traffic strictly so packets never cross boundaries.
+                  </p>
+                  <RoomIsolationVisualizer />
+                </div>
+              )}
+
+              {/* REAL-TIME CHAT 04 — REAL-TIME DOES NOT MEAN EPHEMERAL */}
+              {isChat && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-emerald-600">DECISION 04</span>
+                    <h3 className="text-lg font-bold text-slate-900">Real-Time Does Not Mean Ephemeral: The 50-Message Window</h3>
+                  </div>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    A pure WebSocket implementation makes messages disappear as soon as users refresh the browser. That makes the system fast, but useless for collaboration. The architecture pairs Socket.IO with MongoDB to address two complementary questions:
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4">
+                      <span className="font-mono font-bold text-blue-700 uppercase">Socket.IO Responsibility</span>
+                      <h4 className="mt-1 font-bold text-slate-900 text-sm">Answers: &quot;What is happening right now?&quot;</h4>
+                      <p className="mt-2 text-slate-600 leading-relaxed">
+                        Low-latency event push (&lt;15ms), dynamic presence signaling, and live room broadcasts without client polling.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
+                      <span className="font-mono font-bold text-emerald-700 uppercase">MongoDB Responsibility</span>
+                      <h4 className="mt-1 font-bold text-slate-900 text-sm">Answers: &quot;What happened before I connected?&quot;</h4>
+                      <p className="mt-2 text-slate-600 leading-relaxed">
+                        Durable persistence for user records and room message history. On room entry, the client fetches the latest 50 messages via bounded query.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 font-mono">
+                    <div className="text-slate-400 font-bold block text-[10px] uppercase mb-1">Bounded Room History Query</div>
+                    <span className="text-purple-700">Message</span>.find(&#123; room: <span className="text-emerald-700">&quot;backend-team&quot;</span> &#125;)
+                    .sort(&#123; createdAt: -1 &#125;)
+                    .limit(50)
+                    .exec();
+                  </div>
+                </div>
+              )}
+
+              {/* REAL-TIME CHAT 05 — TYPING INDICATORS & EPHEMERAL PRESENCE */}
+              {isChat && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-amber-600">DECISION 05</span>
+                    <h3 className="text-lg font-bold text-slate-900">Typing Indicators: Why Not Every Event Belongs in the Database</h3>
+                  </div>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Typing indicators demonstrate a crucial real-time engineering discipline: knowing what <strong>not</strong> to persist. Storing <code className="font-mono text-slate-800">&quot;Rohit typed at 10:31:42&quot;</code> in MongoDB would generate massive write IOPS for data with zero archival value.
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+                      <div className="font-bold text-amber-900">Ephemeral Socket Broadcast</div>
+                      <p className="mt-1 text-amber-800 leading-relaxed">
+                        When Rohit types, client emits <code className="font-mono text-amber-950 font-semibold">typing:start</code>. Server broadcasts immediately to room peers. UI renders subtle dot animation. On blur/idle, <code className="font-mono text-amber-950 font-semibold">typing:stop</code> clears the state. Zero database overhead.
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="font-bold text-slate-900">Durable Message Persistence</div>
+                      <p className="mt-1 text-slate-600 leading-relaxed">
+                        Only completed, sent messages are persisted to MongoDB. If Rohit refreshes during typing, the transient indicator cleanly evaporates, while actual conversation history remains permanently intact.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 05 / 06 — THE COMPLETE JOURNEY (VISUAL CENTERPIECE) */}
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-bold text-blue-600">
-                        {isPayflow ? "DECISION 05 // VISUAL CENTERPIECE" : isValiant ? "DECISION 06 // VISUAL CENTERPIECE" : "ARCHITECTURE PIPELINE"}
+                        {isPayflow
+                          ? "DECISION 05 // VISUAL CENTERPIECE"
+                          : isValiant
+                          ? "DECISION 06 // VISUAL CENTERPIECE"
+                          : isChat
+                          ? "DECISION 06 // VISUAL CENTERPIECE"
+                          : "ARCHITECTURE PIPELINE"}
                       </span>
                     </div>
                     <h3 className="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">
-                      {isPayflow ? "The Complete Journey of One Transfer" : isValiant ? "The Complete Journey of an Incident Investigation" : "Architecture Execution Pipeline"}
+                      {isPayflow
+                        ? "The Complete Journey of One Transfer"
+                        : isValiant
+                        ? "The Complete Journey of an Incident Investigation"
+                        : isChat
+                        ? "The Complete Journey of a Real-Time Packet"
+                        : "Architecture Execution Pipeline"}
                     </h3>
                   </div>
 
@@ -913,6 +1119,17 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   </div>
                 )}
 
+                {isChat && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 mb-3">
+                        2. MongoDB Document Schemas (Mongoose) &amp; Room Indexing
+                      </h3>
+                      <ChatSchemaVisualizer />
+                    </div>
+                  </div>
+                )}
+
                 {/* 3. Concurrency / Query Complexity Strategy */}
                 {isPayflow && (
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
@@ -992,6 +1209,34 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                           </tr>
                         </tbody>
                       </table>
+                    </div>
+                  </div>
+                )}
+
+                {isChat && (
+                  <div className="space-y-6">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+                      <h3 className="text-base font-bold text-slate-900">
+                        3. State Classification: Persistent vs. Transient State Matrix
+                      </h3>
+                      <p className="mt-2 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                        A critical architectural discipline in real-time systems is distinguishing state that must survive server restarts (durable persistence in MongoDB) from state that only exists for the duration of an active socket connection (ephemeral memory in Node.js).
+                      </p>
+                      <div className="mt-4">
+                        <TransientVsPersistentMatrix />
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs">
+                      <h3 className="text-base font-bold text-slate-900">
+                        Horizontal Scalability: Socket.IO Clustering with Redis Adapter
+                      </h3>
+                      <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                        While a single Node.js process comfortably handles thousands of concurrent socket connections, enterprise-scale chat requires horizontal scaling. Below is the multi-instance architecture utilizing Redis Pub/Sub adapter to sync socket events across instances behind a reverse proxy / load balancer.
+                      </p>
+                      <div className="mt-4">
+                        <RedisClusterArchitecture />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1104,6 +1349,26 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 <BaselineImpactVisualizer />
                 <ValiantSchemaVisualizer />
                 <ValiantAttributionCard />
+              </div>
+            )}
+
+            {activeTab === "simulators" && isChat && (
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Real-Time Chat Interactive Testing Suite
+                  </h3>
+                  <p className="mt-1 text-xs sm:text-sm text-slate-600">
+                    Interact with the live WebSocket synchronization simulator, HTTP short polling vs. WebSocket benchmark, multi-room isolation tester, MongoDB document schemas, and Redis multi-node cluster architecture.
+                  </p>
+                </div>
+
+                <ChatSyncSimulator />
+                <HttpVsSocketSimulator />
+                <RoomIsolationVisualizer />
+                <ChatSchemaVisualizer />
+                <TransientVsPersistentMatrix />
+                <RedisClusterArchitecture />
               </div>
             )}
 
