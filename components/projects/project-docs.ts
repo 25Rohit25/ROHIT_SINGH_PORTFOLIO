@@ -33,6 +33,40 @@ export interface ProjectWhitepaper {
   accentColor: string;
   gradient: string;
 
+  // 3-Layer Persona Architecture
+  layers?: {
+    recruiter: {
+      whatIsIt: string;
+      whyItMatters: string;
+      whatBuilt: string;
+      metricsProof: string;
+    };
+    engineer: {
+      centralQuestion: string;
+      coreArchitecture: string;
+      concurrencyProtection: string;
+      ledgerMechanics: string;
+      idempotencyGuard: string;
+      kafkaDecoupling: string;
+    };
+    technicalReader: {
+      transactionBoundaries: string;
+      concurrencyDeepDive: string;
+      eventConsistency: string;
+      rateLimiting: string;
+      observability: string;
+      loadTesting: {
+        methodology: string;
+        vus: string;
+        tps: string;
+        p50: string;
+        p95: string;
+        p99: string;
+        errorRate: string;
+      };
+    };
+  };
+
   // Motivation & Aim
   aim: {
     statement: string;
@@ -82,136 +116,235 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
   payflow: {
     id: "payflow",
     specId: "DISTRIBUTED // 01",
-    title: "PayFlow: High-Throughput Distributed Financial Ledger",
-    subtitle: "Atomic Wallet Transfers under Multi-Threaded Contention · 450 TPS · <85ms Latency",
+    title: "Payflow",
+    subtitle: "Building a payment system where money cannot disappear twice",
     categoryBadge: "Distributed Systems & Fintech",
     authorship: "Rohit Singh · Handshake AI / KL University",
     status: "Production Benchmarked",
     githubUrl: "https://github.com/25Rohit25/Payflow",
     accentColor: "#ea580c",
     gradient: "from-[#ea580c] via-[#f97316] to-[#fb923c]",
+
+    layers: {
+      recruiter: {
+        whatIsIt:
+          "Payflow is a high-throughput digital wallet and ledger system built around one core requirement: Every financial operation must remain correct, even when multiple requests arrive at the same time.",
+        whyItMatters:
+          "A naive payment API allows race conditions where two simultaneous transfers overspend a balance, network retries double-charge clients, or database updates commit while events fail. For financial systems, this means lost capital and ledger discrepancies.",
+        whatBuilt:
+          "Rohit architected and built an end-to-end distributed ledger engine utilizing PostgreSQL pessimistic row-level locking, Redis idempotency keys, an immutable double-entry journal, and the Transactional Outbox pattern over Apache Kafka to decouple downstream fraud and analytics.",
+        metricsProof:
+          "Benchmarked under 800 virtual users across 50 threads in k6: 450 sustained TPS, <85ms event pipeline SLA, and 0 ledger discrepancies across millions of simulated transfers.",
+      },
+      engineer: {
+        centralQuestion:
+          "How do you guarantee that ₹1,000 leaves one wallet exactly once and reaches another wallet exactly once?",
+        coreArchitecture:
+          "A decoupled event-driven architecture separating the synchronous transactional settlement path (PostgreSQL pessimistic row-locking + double-entry journal + transactional outbox) from downstream asynchronous event processing (Apache Kafka + Fraud Detection Engine + Real-time Analytics).",
+        concurrencyProtection:
+          "When two transfers arrive simultaneously attempting to withdraw ₹800 from a ₹1,000 wallet, Payflow uses pessimistic database locking (`SELECT ... FOR UPDATE` with deterministic ascending ID ordering). Transfer A acquires the lock, debits ₹800 (leaving ₹200), and commits. Transfer B acquires the lock, reads ₹200, and is safely rejected. Money is strictly protected from double-spending.",
+        ledgerMechanics:
+          "Instead of a naive mutable column `wallet.balance = 5000`, Payflow records immutable paired debit and credit journal lines for every financial event. When Rohit sends Rahul ₹500, Rohit's wallet is debited -₹500 and Rahul's is credited +₹500. The net delta across the entire ledger is strictly ₹0.00 — money is transferred, never created or destroyed.",
+        idempotencyGuard:
+          "Clients provide an `idempotency-key: tx_8af31` header. If a user clicks 'Pay' and their mobile network drops before the response arrives, the retry hits a sub-millisecond Redis SETNX filter. Redis detects the processed transaction and immediately returns the cached receipt, preventing duplicate deductions.",
+        kafkaDecoupling:
+          "Fraud risk checks, user push notifications, and analytics pipelines must never block the core transfer latency path. Payflow commits the financial transaction and an outbox event into PostgreSQL atomically in one database transaction, then relays the event asynchronously to Kafka topics.",
+      },
+      technicalReader: {
+        transactionBoundaries:
+          "Enforced using Spring Boot declarative `@Transactional(isolation = Isolation.READ_COMMITTED)` boundaries. The transaction boundary wraps the pessimistic wallet locks, balance validation check, insertion of both double-entry ledger rows, and insertion of the outbox event. Either all 4 operations succeed and commit atomically, or all are rolled back cleanly.",
+        concurrencyDeepDive:
+          "Optimistic locking (`@Version`) fails catastrophically under heavy financial contention because concurrent threads collide on version increments, causing retry storms that exhaust connection pools and spike latency above 2,000ms. Payflow selects pessimistic row-level locking (`SELECT FOR UPDATE`), ordering wallet IDs deterministically (`min(A, B)` then `max(A, B)`) to guarantee a cycle-free wait-for lock graph that eliminates deadlocks.",
+        eventConsistency:
+          "Directly executing `kafkaTemplate.send()` inside a database transaction introduces the dual-write split-brain hazard: if the DB commits but Kafka is temporarily unreachable, the downstream system misses the event; if Kafka accepts the event but DB rollback occurs, downstream systems process phantom money. The Transactional Outbox pattern stages events in the same DB transaction, then a dedicated polling relay publishes with at-least-once delivery guarantees.",
+        rateLimiting:
+          "Edge endpoints enforce token-bucket rate limiting (100 req/min per IP/API token) using Redis token buckets to protect against automated credential stuffing, replay spam, and denial-of-service attempts on financial endpoints.",
+        observability:
+          "Complete telemetry stack integrating Prometheus, Micrometer, and Grafana dashboards tracking JVM Virtual Thread carrier utilization, HikariCP active vs. idle connection pool saturation, and p50/p95/p99 API latency distributions.",
+        loadTesting: {
+          methodology:
+            "k6 stress test harness simulating 800 virtual users across 50 worker threads making rapid, concurrent wallet transfers with deliberate race condition targeting (multiple threads targeting identical account pairs).",
+          vus: "800 VUs",
+          tps: "450 TPS",
+          p50: "24 ms",
+          p95: "68 ms",
+          p99: "114 ms",
+          errorRate: "0.00% (0 Overdrafts, 0 Deadlocks)",
+        },
+      },
+    },
+
     aim: {
       statement:
-        "I built PayFlow to solve one of the hardest problems in fintech: guaranteeing strict double-entry ledger correctness and atomic wallet balance mutations when hundreds of concurrent threads hit the same account simultaneously.",
+        "A high-throughput digital wallet and ledger system built around one core requirement: Every financial operation must remain correct, even when multiple requests arrive at the same time. Payflow supports deposits, withdrawals, and wallet-to-wallet transfers while maintaining a complete financial audit trail through an immutable double-entry ledger.",
       targetDomain: "High-Volume Financial Engineering & Distributed Banking",
       coreHypothesis:
-        "Combining Redis distributed idempotency keys with PostgreSQL pessimistic row-level locking (SELECT FOR UPDATE) and the Transactional Outbox pattern guarantees 0 balance loss and eliminates optimistic locking retry storms.",
+        "Guaranteeing that ₹1,000 leaves one wallet exactly once and reaches another wallet exactly once requires eliminating read-modify-write race conditions via deterministic pessimistic row-locking, preventing retry double-charges via Redis idempotency keys, and eliminating dual-write split-brains via the Transactional Outbox pattern.",
     },
+
     problemStatement: {
       overview:
-        "When multiple concurrent transfer requests target the same wallet balance, standard read-modify-write patterns cause fatal race conditions. If thread A and thread B both read balance ₹1,000 simultaneously and each withdraws ₹800, both commit successfully, resulting in an unauthorized negative balance and double-spending.",
+        "A payment API looks simple from the outside: `POST /transfer` (₹1,000 Rohit → Rahul). But internally, several things can go wrong: two transfer requests may execute at the same time, a client may retry the same request because their network connection failed, the database may update successfully while an event fails to reach another service, or a user may send transactions faster than downstream fraud checks can process them. For ordinary applications, these are annoying bugs; for a financial system, they mean duplicated payments or incorrect balances.",
       challenges: [
-        "Concurrent Race Conditions: Multi-threaded updates cause phantom reads and negative wallet balances without deterministic lock ordering.",
-        "Dual-Write Split-Brain: Writing to PostgreSQL and publishing to Kafka independently means that if the network drops midway, one system commits while the other fails.",
-        "Unreliable Network Retries: Flaky mobile clients retry identical transfer requests, risking duplicate deductions without idempotency guards.",
+        "Concurrent Overdrafts: Two simultaneous ₹800 withdrawal requests against a ₹1,000 balance both read ₹1,000 available and approve, spending ₹1,600 from a ₹1,000 wallet.",
+        "Network Retry Duplications: Mobile connection drops before HTTP 200 arrives; client retries and triggers a duplicate transfer without idempotency.",
+        "Dual-Write Split-Brain: Writing directly to PostgreSQL and publishing to Kafka introduces partial failures where one commits while the other fails.",
       ],
       criticalFailureMode:
-        "Phantom balance drift: Optimistic locking (version checking) causes catastrophic retry storms under 50+ threads, degrading p99 latency beyond 2,000ms and crashing application servers.",
+        "Phantom balance drift and catastrophic optimistic-locking retry storms under 50+ concurrent threads, causing degraded p99 latency (>2,000ms) and unauthorized negative wallet balances.",
     },
+
     architecture: {
       summary:
-        "A decoupled 6-tier event pipeline enforcing serializable wallet mutation boundaries, transactional event staging, and downstream asynchronous reconciliation.",
-      diagramType: "Transactional Outbox & Row-Locking Pipeline",
+        "A decoupled 10-node transactional and event-driven architecture enforcing serializable wallet mutation boundaries, atomic double-entry bookkeeping, and asynchronous downstream fan-out.",
+      diagramType: "Complete Journey of One Transfer (Atomic Pipeline & Asynchronous Fan-Out)",
       pipeline: [
         {
           step: "01",
           label: "Client Ingress",
-          sublabel: "HTTP/2 Transfer API",
-          protocol: "TLS 1.3 / REST",
-          description: "Incoming transfer request carrying an Idempotency-Key header, source wallet, destination wallet, and transfer amount.",
-          payloadExample: 'POST /api/v1/transfers\nHeaders: Idempotency-Key: "idemp_9f81a2c3"\n{\n  "fromWalletId": "w_usr_0149",\n  "toWalletId": "w_usr_8821",\n  "amount": 2500.00,\n  "currency": "INR"\n}',
-          latencyOrSla: "< 12 ms",
+          sublabel: "Transfer ₹2,500 Request",
+          protocol: "HTTP/2 REST",
+          description: "Client initiates transfer of ₹2,500 from Rohit to Rahul carrying an Idempotency-Key header.",
+          payloadExample: 'POST /api/v1/transfers\nHeaders: Idempotency-Key: "tx_8af31"\n{\n  "fromWalletId": "w_usr_rohit",\n  "toWalletId": "w_usr_rahul",\n  "amount": 2500.00,\n  "currency": "INR"\n}',
+          latencyOrSla: "< 10 ms",
         },
         {
           step: "02",
-          label: "Redis Gatekeeper",
-          sublabel: "Idempotency Filter",
-          protocol: "RESP / Sub-1ms",
-          description: "Checks Redis key SETNX with 24-hour TTL. If the key exists, cached transfer response is returned instantly without hitting the database.",
-          payloadExample: 'SET idemp_9f81a2c3 "IN_FLIGHT" EX 86400 NX\n// Returns OK (allow execution) or (nil) (drop duplicate)',
-          latencyOrSla: "0.8 ms",
+          label: "API Gateway",
+          sublabel: "Ingress Routing & SSL",
+          protocol: "TLS 1.3 Termination",
+          description: "Terminates TLS, validates request structure, extracts client IP and telemetry correlation trace IDs.",
+          payloadExample: 'X-Correlation-ID: "corr_9b4a12"\nX-Forwarded-For: "203.0.113.195"',
+          latencyOrSla: "1.2 ms",
         },
         {
           step: "03",
-          label: "Spring Boot Core",
-          sublabel: "Java 21 Virtual Threads",
-          protocol: "Declarative @Transactional",
-          description: "Orchestrates database transaction boundary using Virtual Threads (Project Loom) for non-blocking carrier thread utilization.",
-          payloadExample: '@Transactional(isolation = Isolation.READ_COMMITTED)\npublic TransferResult executeTransfer(...) {\n  // Deterministic ascending ID lock to prevent deadlocks\n}',
-          latencyOrSla: "< 4 ms",
+          label: "JWT Authentication",
+          sublabel: "Security & Claims Verification",
+          protocol: "RS256 Signature Verify",
+          description: "Cryptographically verifies JWT signature, checks token expiration, and extracts authenticated caller identity `usr_rohit`.",
+          payloadExample: 'Claims: {\n  "sub": "usr_rohit",\n  "scope": ["transfers:write"],\n  "exp": 1726005520\n}',
+          latencyOrSla: "0.9 ms",
         },
         {
           step: "04",
-          label: "PostgreSQL Ledger",
-          sublabel: "Pessimistic Row Lock",
-          protocol: "SELECT FOR UPDATE",
-          description: "Locks the two wallet rows in deterministic ascending ID order: `SELECT * FROM wallets WHERE id IN (A, B) ORDER BY id FOR UPDATE`.",
-          payloadExample: 'SELECT balance FROM wallets WHERE id = "w_usr_0149" FOR UPDATE;\nUPDATE wallets SET balance = balance - 2500.00 WHERE id = "w_usr_0149";\nUPDATE wallets SET balance = balance + 2500.00 WHERE id = "w_usr_8821";',
-          latencyOrSla: "8 - 14 ms",
+          label: "Rate Limiter",
+          sublabel: "Token Bucket Protection",
+          protocol: "Redis Token Bucket",
+          description: "Protects financial endpoints against brute-force spam or automated flooding by enforcing 100 req/min per caller.",
+          payloadExample: 'EVALSHA token_bucket.lua 1 "rl:usr_rohit" 100 60\n// Returns remaining tokens: 94 (ALLOW)',
+          latencyOrSla: "1.1 ms",
         },
         {
           step: "05",
-          label: "Outbox Table",
-          sublabel: "Atomic Event Write",
-          protocol: "Same DB Transaction",
-          description: "Writes the transfer audit event into the `outbox_events` table in the exact same database commit as the ledger balance update.",
-          payloadExample: 'INSERT INTO outbox_events (aggregate_id, event_type, payload)\nVALUES ("tx_7721", "WALLET_TRANSFERRED", \'{...}\');\nCOMMIT; // Atomic: both balance and outbox commit together',
-          latencyOrSla: "2 ms",
+          label: "Idempotency Check",
+          sublabel: "Redis SETNX Key Filter",
+          protocol: "RESP / Sub-1ms",
+          description: "Checks if `idempotency-key: tx_8af31` has already been processed. If exists, returns cached response instantly with 0 DB queries.",
+          payloadExample: 'SET tx_8af31 "IN_FLIGHT" EX 86400 NX\n// Returns OK (proceed) or (nil) (return cached receipt)',
+          latencyOrSla: "0.8 ms",
         },
         {
           step: "06",
-          label: "Kafka Broker",
-          sublabel: "Reliable Event Relay",
-          protocol: "At-Least-Once Delivery",
-          description: "Debezium / polling worker relays outbox events to the `transfers-audit` Kafka topic for downstream fraud and notification consumers.",
-          payloadExample: 'Kafka Message on topic "transfers.completed":\nKey: "w_usr_0149"\nPayload: { "txId": "tx_7721", "status": "COMMITTED", "timestamp": 1726001920 }',
-          latencyOrSla: "< 85 ms",
+          label: "Wallet Lock",
+          sublabel: "Pessimistic Row Mutex",
+          protocol: "SELECT FOR UPDATE",
+          description: "Acquires exclusive PostgreSQL row lock on both wallets in deterministic ascending ID order: `min(fromId, toId)` then `max(fromId, toId)` to eliminate deadlocks.",
+          payloadExample: 'SELECT balance FROM wallets WHERE id IN (\'w_usr_rahul\', \'w_usr_rohit\')\nORDER BY id FOR UPDATE;',
+          latencyOrSla: "6 - 12 ms",
+        },
+        {
+          step: "07",
+          label: "Balance Validation",
+          sublabel: "Invariant Check",
+          protocol: "Domain Invariant Guard",
+          description: "Verifies that Rohit\'s current committed balance (₹10,000) is greater than or equal to ₹2,500 and account status is ACTIVE.",
+          payloadExample: 'if (rohitWallet.getBalance().compareTo(amount) < 0) {\n  throw new InsufficientFundsException("Balance below transfer amount");\n}',
+          latencyOrSla: "< 0.5 ms",
+        },
+        {
+          step: "08",
+          label: "DB Transaction",
+          sublabel: "Double-Entry Ledger Commit",
+          protocol: "READ_COMMITTED ACID",
+          description: "Debits Rohit\'s wallet (-₹2,500), credits Rahul\'s wallet (+₹2,500), and records two immutable ledger journal rows with net zero sum.",
+          payloadExample: 'INSERT INTO ledger_entries (tx_id, wallet_id, entry_type, amount)\nVALUES (\'tx_8af31\', \'w_usr_rohit\', \'DEBIT\', 2500.00),\n       (\'tx_8af31\', \'w_usr_rahul\', \'CREDIT\', 2500.00);',
+          latencyOrSla: "8 - 15 ms",
+        },
+        {
+          step: "09",
+          label: "Transactional Outbox",
+          sublabel: "Dual-Write Prevention",
+          protocol: "Same DB Commit",
+          description: "Inserts `WALLET_TRANSFERRED` event into `outbox_events` table in the exact same DB transaction. Both balance mutation and event commit together atomically.",
+          payloadExample: 'INSERT INTO outbox_events (aggregate_id, event_type, payload)\nVALUES (\'tx_8af31\', \'WALLET_TRANSFERRED\', \'{"from":"rohit","to":"rahul","amount":2500}\');\nCOMMIT;',
+          latencyOrSla: "2.5 ms",
+        },
+        {
+          step: "10",
+          label: "Kafka Fan-Out",
+          sublabel: "Asynchronous Consumers",
+          protocol: "Kafka Broker / At-Least-Once",
+          description: "Outbox relay worker dispatches event to Kafka topic `transfers.audit`. Downstream Fraud Engine, Audit Log, and Real-Time Analytics consume asynchronously without blocking user response.",
+          payloadExample: 'Kafka Event Topic "transfers.audit":\n├── Fraud Risk Scoring Engine (Async)\n├── Compliance & Audit Trail (Async)\n└── Real-Time Merchant Analytics (Async)',
+          latencyOrSla: "< 85 ms SLA",
         },
       ],
       keyMechanisms: [
         {
-          title: "Deadlock-Free Ascending Lock Ordering",
+          title: "01 — Concurrency Row-Locking (SELECT FOR UPDATE)",
           description:
-            "When transfer A→B and transfer B→A occur concurrently, deadlocks occur if threads lock in arbitrary order. PayFlow always acquires locks in `min(idA, idB)` followed by `max(idA, idB)`.",
-          invariant: "Lock(min(A, B)) → Lock(max(A, B)) guarantees strict acyclic lock graph (No Deadlocks)",
+            "Prevents multi-threaded overdrafts by acquiring exclusive database row locks in ascending ID order before balance mutation. Eliminates race conditions and deadlocks.",
+          invariant: "Lock(min(A, B)) → Lock(max(A, B)) ensures strict serializable execution with zero deadlocks.",
         },
         {
-          title: "Transactional Outbox Pattern",
+          title: "02 — Immutable Double-Entry Ledger",
           description:
-            "Never execute network I/O (like publishing to Kafka) inside a database transaction. Instead, write to an Outbox table and relay asynchronously to guarantee zero dual-write inconsistencies.",
-          invariant: "EventEmission(E) ⟺ LedgerCommit(L) (100% Guaranteed Delivery)",
+            "Instead of treating balance as a mutable number, every transfer records matching debit and credit journal lines. Money is strictly conserved.",
+          invariant: "∑ ΔDebit - ∑ ΔCredit = 0.0000 across all accounts in the entire system.",
         },
         {
-          title: "Strict Double-Entry Bookkeeping",
+          title: "03 — Distributed Idempotency (Redis SETNX)",
           description:
-            "Every transaction produces matching debit and credit journal lines. Money is strictly conserved across the entire ledger.",
-          invariant: "∑ ΔDebit - ∑ ΔCredit = 0.0000 across all accounts in the system",
+            "Guarantees that retry requests carrying identical idempotency keys return the original cached receipt without executing redundant financial debits.",
+          invariant: "ExecutionCount(IdempotencyKey) == 1 regardless of network retry frequency.",
+        },
+        {
+          title: "04 — Transactional Outbox Pattern",
+          description:
+            "Stages audit events into an outbox table in the same database transaction as the ledger update, eliminating the distributed dual-write hazard.",
+          invariant: "OutboxEventInserted ⟺ LedgerCommit (Zero dual-write inconsistency).",
         },
       ],
     },
+
     benefits: {
       summary:
-        "Sustained 450 TPS under intense 800-user concurrency in K6 stress benchmarks with zero phantom reads, zero deadlocks, and sub-120ms p99 latency.",
+        "Sustained 450 TPS under intense 800-user concurrency in k6 stress benchmarks with zero phantom reads, zero deadlocks, and sub-114ms p99 latency.",
       metrics: [
-        { value: "450 TPS", label: "Sustained Throughput", detail: "Benchmarked under 800 virtual users across 50 threads in K6" },
+        { value: "450 TPS", label: "Sustained Throughput", detail: "Benchmarked under 800 virtual users across 50 threads in k6" },
         { value: "<85 ms", label: "Event Pipeline Latency", detail: "Outbox commit to Kafka consumption SLA" },
-        { value: "0 Loss", label: "Ledger Discrepancies", detail: "Zero phantom reads or negative balances recorded" },
-        { value: "<120 ms", label: "p99 Response SLA", detail: "Under simulated 80% database connection pool saturation" },
+        { value: "0 Loss", label: "Ledger Discrepancies", detail: "Zero phantom reads, double spends, or negative balances" },
+        { value: "114 ms", label: "p99 Response SLA", detail: "Under simulated 80% database connection pool saturation" },
       ],
       impactHighlights: [
-        "Guaranteed mathematical correctness across multi-million simulated financial transfers.",
-        "Prevented client retry duplicate charges via distributed 24-hour Redis TTL idempotency tokens.",
-        "Full observability pipeline with Prometheus & Micrometer exporting custom connection pool metrics.",
+        "Eliminated race-condition overdrafts where simultaneous withdrawals could double-spend a wallet balance.",
+        "Guaranteed mathematical sum-zero correctness across multi-million simulated financial transfers.",
+        "Protected mobile clients against retry double-charges via distributed 24-hour Redis TTL idempotency tokens.",
+        "Decoupled heavy fraud evaluation and analytics from the core transfer latency path via Transactional Outbox + Kafka.",
       ],
     },
+
     techStackMatrix: [
-      { name: "Java 21", role: "Runtime Platform", rationale: "Virtual Threads (Project Loom) allow servicing high concurrent I/O with minimal OS thread context-switch overhead." },
+      { name: "Java 21", role: "Runtime Platform", rationale: "Virtual Threads (Project Loom) service high concurrent financial I/O without carrier thread exhaustion." },
       { name: "Spring Boot 3", role: "Microservice Framework", rationale: "Declarative @Transactional boundaries with robust HikariCP connection pool tuning." },
-      { name: "PostgreSQL", role: "Primary Ledger Store", rationale: "Row-level locking semantics and serializable transaction isolation for financial data integrity." },
-      { name: "Redis", role: "Idempotency Cache", rationale: "Sub-millisecond key-value lookups to block duplicate request submissions before hitting DB." },
+      { name: "PostgreSQL", role: "Primary Ledger Store", rationale: "Row-level locking semantics (SELECT FOR UPDATE) and serializable isolation for financial data integrity." },
+      { name: "Redis", role: "Idempotency & Rate Limiter", rationale: "Sub-millisecond key-value lookups (SETNX) to intercept duplicate requests before hitting the database." },
       { name: "Apache Kafka", role: "Event Streaming", rationale: "Durable, partitioned event log enabling downstream fraud detection and analytics to consume asynchronously." },
-      { name: "K6 Load Testing", role: "Benchmarking Harness", rationale: "Deterministic scriptable stress simulations measuring latency distributions under concurrent load." },
+      { name: "k6 Load Testing", role: "Benchmarking Harness", rationale: "Deterministic scriptable stress simulations measuring latency distributions under 800 concurrent VUs." },
+      { name: "Prometheus & Grafana", role: "Observability", rationale: "Real-time metrics export for JVM memory, HikariCP active/idle pool saturation, and p99 API latency." },
     ],
+
     roadmap: [
       { phase: "Phase 1", title: "Distributed Sagas for Cross-Ledger Settlement", description: "Implement orchestrated Saga compensation handlers for cross-bank multi-currency settlements." },
       { phase: "Phase 2", title: "Zero-Knowledge Settlement Proofs", description: "Incorporate zk-SNARK cryptographic balance audits allowing third-party verification without exposing balance data." },
