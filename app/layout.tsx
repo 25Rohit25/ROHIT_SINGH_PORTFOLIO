@@ -11,9 +11,37 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Rohit Singh — Software Engineer | Distributed Systems · Backend · AI Agents",
+  metadataBase: new URL("https://rohit-singh-iota.vercel.app"),
+  title: "Rohit Singh — Software Engineering Portfolio",
   description:
-    "Portfolio of Rohit Singh. Software Engineering Contractor at Handshake AI, Distributed Systems Engineer, LeetCode Knight (2008), and Backend Developer specializing in Java, Spring Boot, Kafka, and AI Agent evaluation.",
+    "Backend systems, AI engineering, distributed systems, cloud infrastructure and detailed technical case studies.",
+
+  openGraph: {
+    title: "Rohit Singh — Software Engineering Portfolio",
+    description:
+      "Backend systems, AI engineering, distributed systems, cloud infrastructure and detailed technical case studies.",
+    url: "https://rohit-singh-iota.vercel.app/",
+    siteName: "Rohit Singh",
+    images: [
+      {
+        url: "https://rohit-singh-iota.vercel.app/portfolio-preview.png",
+        width: 1200,
+        height: 630,
+        alt: "Rohit Singh Software Engineering Portfolio",
+      },
+    ],
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Rohit Singh — Software Engineering Portfolio",
+    description:
+      "Backend systems, AI engineering, distributed systems and technical case studies.",
+    images: [
+      "https://rohit-singh-iota.vercel.app/portfolio-preview.png",
+    ],
+  },
 };
 
 export default function RootLayout({

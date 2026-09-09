@@ -212,15 +212,27 @@ function TextDrum({
             {beat.eyebrow}
           </div>
 
-          <h1
-            className="text-[clamp(2.1rem,6.5vw,6rem)] font-semibold leading-[0.94] tracking-[-0.04em] text-[#f4f1eb]"
-          >
-            <span className="block">{beat.firstLine}</span>
-            <span className="block">{beat.secondLine}</span>
-            <span className="font-serif font-normal italic tracking-[-0.065em] text-[#f4f1eb]">
-              {beat.thirdLine}
-            </span>
-          </h1>
+          {index === 0 ? (
+            <h1
+              className="text-[clamp(2.1rem,6.5vw,6rem)] font-semibold leading-[0.94] tracking-[-0.04em] text-[#f4f1eb]"
+            >
+              <span className="block">{beat.firstLine}</span>
+              <span className="block">{beat.secondLine}</span>
+              <span className="font-serif font-normal italic tracking-[-0.065em] text-[#f4f1eb]">
+                {beat.thirdLine}
+              </span>
+            </h1>
+          ) : (
+            <h2
+              className="text-[clamp(2.1rem,6.5vw,6rem)] font-semibold leading-[0.94] tracking-[-0.04em] text-[#f4f1eb]"
+            >
+              <span className="block">{beat.firstLine}</span>
+              <span className="block">{beat.secondLine}</span>
+              <span className="font-serif font-normal italic tracking-[-0.065em] text-[#f4f1eb]">
+                {beat.thirdLine}
+              </span>
+            </h2>
+          )}
 
           <p className="mt-3 max-w-lg text-xs leading-relaxed text-white/75 sm:mt-6 sm:text-sm md:text-[15px]">
             {beat.copy}
