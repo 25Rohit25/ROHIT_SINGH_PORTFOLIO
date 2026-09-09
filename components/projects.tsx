@@ -138,24 +138,9 @@ const projects: ProjectItem[] = [
 
   // 2. AI & COMPUTER VISION
   {
-    id: "retail-lens",
-    category: "ai",
-    number: "06",
-    badge: "AI & Computer Vision",
-    title: "Retail_Lens",
-    subtitle: "AI-Powered CCTV intelligence · YOLOv8 Nano · Edge shopper tracking",
-    description:
-      "End-to-end edge computer vision and store analytics platform transforming raw CCTV streams into structured behavioral intelligence: shopper journey tracking, dwell analysis, and queue congestion detection.",
-    metrics: "YOLOv8 Nano · ByteTrack · 100/100 Score",
-    stack: ["Python", "YOLOv8", "OpenCV", "ByteTrack", "FastAPI", "PostgreSQL", "Docker"],
-    github: "https://github.com/25Rohit25/Retail_Lens",
-    gradient: "from-[#d97706] via-[#f59e0b] to-[#fbbf24]",
-    accentColor: "#d97706",
-  },
-  {
     id: "nexabank",
     category: "ai",
-    number: "07",
+    number: "06",
     badge: "AI & Agent Systems",
     title: "Nexa Bank",
     subtitle: "AI-Native Banking with MCP · Policy-grounded RAG compliance",
@@ -164,6 +149,7 @@ const projects: ProjectItem[] = [
     metrics: "MCP Protocol · RAG Guardrails · Kafka Audit",
     stack: ["Java 21", "Spring Boot", "MCP", "RAG", "PostgreSQL", "Kafka", "Docker"],
     github: "https://github.com/25Rohit25/NexaBank",
+    thumbnail: "/projects/nexabank-dashboard.png",
     gradient: "from-[#0284c7] via-[#0ea5e9] to-[#38bdf8]",
     accentColor: "#0284c7",
     workflowExample: {
@@ -171,6 +157,22 @@ const projects: ProjectItem[] = [
       trace:
         "Agent parses intent → queries RAG Policy Context for daily transfer limits & KYC status → invokes MCP tool executeTransfer → validates parameters against Spring Boot core → commits transaction → emits Kafka audit event.",
     },
+  },
+  {
+    id: "retail-lens",
+    category: "ai",
+    number: "07",
+    badge: "AI & Computer Vision",
+    title: "Retail_Lens",
+    subtitle: "AI-Powered CCTV intelligence · YOLOv8 Nano · Edge shopper tracking",
+    description:
+      "End-to-end edge computer vision and store analytics platform transforming raw CCTV streams into structured behavioral intelligence: shopper journey tracking, dwell analysis, and queue congestion detection.",
+    metrics: "YOLOv8 Nano · ByteTrack · 100/100 Score",
+    stack: ["Python", "YOLOv8", "OpenCV", "ByteTrack", "FastAPI", "PostgreSQL", "Docker"],
+    github: "https://github.com/25Rohit25/Retail_Lens",
+    thumbnail: "/projects/retail-lens-hero.png",
+    gradient: "from-[#d97706] via-[#f59e0b] to-[#fbbf24]",
+    accentColor: "#d97706",
   },
   {
     id: "fitlife",
@@ -184,6 +186,7 @@ const projects: ProjectItem[] = [
     metrics: "Gemini AI Synthesis · Spring Boot · K8s HPA",
     stack: ["React", "Spring Boot", "MySQL", "Gemini AI", "JWT", "Docker", "Kubernetes"],
     github: "https://github.com/25Rohit25/FitLife",
+    thumbnail: "/projects/fitlife-hero.png",
     gradient: "from-[#0d9488] via-[#14b8a6] to-[#2dd4bf]",
     accentColor: "#0d9488",
   },
@@ -218,6 +221,7 @@ const projects: ProjectItem[] = [
     stack: ["React", "TypeScript", "Three.js", "R3F", "Zustand", "GSAP", "Tailwind"],
     github: "https://github.com/25Rohit25/Luma_web3",
     live: "https://luma-web3-us4a.vercel.app/",
+    thumbnail: "/projects/luma-hero.png",
     gradient: "from-[#ea580c] via-[#f97316] to-[#fb923c]",
     accentColor: "#ea580c",
   },
@@ -234,6 +238,7 @@ const projects: ProjectItem[] = [
     stack: ["React 19", "TypeScript", "Vite 8", "Three.js 0.185", "R3F 9", "Motion 13", "Tailwind"],
     github: "https://github.com/25Rohit25/AURELIA",
     live: "https://aurelia-houses.vercel.app/",
+    thumbnail: "/projects/aurelia-hero.png",
     gradient: "from-[#b45309] via-[#d97706] to-[#f59e0b]",
     accentColor: "#b45309",
   },

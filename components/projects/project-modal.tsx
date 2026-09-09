@@ -318,6 +318,16 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                       ? "bhopalfood.com // train-catering"
                       : project.id === "waste-no-more"
                       ? "wastenomore.org // food-rescue"
+                      : project.id === "nexabank"
+                      ? "nexabank.ai // mcp-agent-banking"
+                      : project.id === "luma-web3"
+                      ? "luma.web3 // 3d-configurator"
+                      : project.id === "aurelia"
+                      ? "aurelia.hotel // 360-panoramic-webgl"
+                      : project.id === "fitlife"
+                      ? "fitlife.pro // ai-health-coach"
+                      : project.id === "retail-lens"
+                      ? "retaillens.vision // cctv-shopper-tracking"
                       : `${project.id}.app // dashboard`}
                   </span>
                 </div>
@@ -330,6 +340,16 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     ? "https://bhopal-food.vercel.app (Bhopal Food Choice)"
                     : project.id === "waste-no-more"
                     ? "https://waste-no-more.vercel.app (Waste No More)"
+                    : project.id === "nexabank"
+                    ? "http://localhost:3000 (Nexa Bank | AI Agent Banking)"
+                    : project.id === "luma-web3"
+                    ? "https://luma-web3-us4a.vercel.app (Luma 3D Experience)"
+                    : project.id === "aurelia"
+                    ? "https://aurelia-houses.vercel.app (AURELIA Luxury Retreats)"
+                    : project.id === "fitlife"
+                    ? "http://localhost:5173 (FitLife Pro | Healthier You)"
+                    : project.id === "retail-lens"
+                    ? "http://localhost:8501 (Retail_Lens | Vision Intelligence)"
                     : `https://${project.id}.rohit.engineering/dashboard`}
                 </div>
                 <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 font-mono text-[9px] font-semibold text-emerald-800">

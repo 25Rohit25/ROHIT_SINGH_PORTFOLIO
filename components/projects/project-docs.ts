@@ -766,6 +766,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     authorship: "Rohit Singh · Handshake AI / KL University",
     status: "Evaluated 100/100 Benchmark Score",
     githubUrl: "https://github.com/25Rohit25/Retail_Lens",
+    thumbnail: "/projects/retail-lens-hero.png",
     accentColor: "#d97706",
     gradient: "from-[#d97706] via-[#f59e0b] to-[#fbbf24]",
     aim: {
@@ -900,6 +901,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     authorship: "Rohit Singh · Handshake AI / KL University",
     status: "Production Verified Architecture",
     githubUrl: "https://github.com/25Rohit25/NexaBank",
+    thumbnail: "/projects/nexabank-dashboard.png",
     accentColor: "#0284c7",
     gradient: "from-[#0284c7] via-[#0ea5e9] to-[#38bdf8]",
     aim: {
@@ -1294,6 +1296,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     authorship: "Rohit Singh · Handshake AI / KL University",
     status: "Production Architecture",
     githubUrl: "https://github.com/25Rohit25/FitLife",
+    thumbnail: "/projects/fitlife-hero.png",
     accentColor: "#0d9488",
     gradient: "from-[#0d9488] via-[#14b8a6] to-[#2dd4bf]",
     aim: {
@@ -1552,6 +1555,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     status: "Production Deployed (Vercel)",
     githubUrl: "https://github.com/25Rohit25/Luma_web3",
     liveUrl: "https://luma-web3-us4a.vercel.app/",
+    thumbnail: "/projects/luma-hero.png",
     accentColor: "#ea580c",
     gradient: "from-[#ea580c] via-[#f97316] to-[#fb923c]",
     aim: {
@@ -1677,6 +1681,7 @@ export const projectDocs: Record<string, ProjectWhitepaper> = {
     status: "Production Deployed (Vercel)",
     githubUrl: "https://github.com/25Rohit25/AURELIA",
     liveUrl: "https://aurelia-houses.vercel.app/",
+    thumbnail: "/projects/aurelia-hero.png",
     accentColor: "#b45309",
     gradient: "from-[#b45309] via-[#d97706] to-[#f59e0b]",
     aim: {

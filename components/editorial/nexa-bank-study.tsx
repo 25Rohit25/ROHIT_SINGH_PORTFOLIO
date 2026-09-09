@@ -71,6 +71,41 @@ export default function NexaBankStudy() {
           </div>
         </motion.div>
 
+        {/* Live Interface Preview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-16 overflow-hidden rounded-2xl border border-black/[0.08] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
+        >
+          {/* Browser Window Header */}
+          <div className="flex items-center justify-between border-b border-black/[0.06] bg-[#fbfbfd] px-4 py-3 sm:px-6">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-[#ff5f56]" />
+              <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
+              <span className="h-3 w-3 rounded-full bg-[#27c93f]" />
+              <span className="ml-2 font-mono text-[11px] text-[#86868b] hidden sm:inline-block">
+                nexabank.ai // mcp-agent-banking
+              </span>
+            </div>
+            <div className="rounded-md bg-black/[0.04] px-3 py-1 font-mono text-[10px] text-[#6e6e73] truncate max-w-xs sm:max-w-md">
+              http://localhost:3000 (Nexa Bank | AI Agent Banking)
+            </div>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 font-mono text-[9px] font-semibold text-emerald-700 border border-emerald-200/60">
+              ● LIVE RUNNING ARCHITECTURE
+            </span>
+          </div>
+          <div className="relative overflow-hidden bg-slate-950">
+            <img
+              src="/projects/nexabank-dashboard.png"
+              alt="Nexa Bank Live UI Interface with AI Assistant & MCP Tool Execution"
+              className="w-full h-auto object-cover object-top"
+              loading="lazy"
+            />
+          </div>
+        </motion.div>
+
         {/* Product-Style Interaction Example */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
